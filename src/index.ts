@@ -1,5 +1,6 @@
 import express from 'express';
 import type { NextFunction, Request, Response } from 'express';
+import productRoutes from './routes/products.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,6 +11,8 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Animal Shop API' });
 });
+
+app.use('/products', productRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: `Route ${req.method} ${req.url} not found` });
