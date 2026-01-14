@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import type { NextFunction, Request, Response } from 'express';
 import productRoutes from './routes/products.js';
 
@@ -7,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Animal Shop API' });
