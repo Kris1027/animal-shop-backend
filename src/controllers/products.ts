@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { products } from '../data/products.js';
 import { Product } from '../schemas/product.js';
 import { generateSlug } from '../utils/slug.js';
+import { sendCreated, sendNotFound, sendPaginated, sendSuccess } from '../utils/response.js';
 
 export const productController = {
   // GET /products
@@ -25,14 +26,11 @@ export const productController = {
     const endIndex = startIndex + limit;
     const paginated = filtered.slice(startIndex, endIndex);
 
-    res.json({
-      data: paginated,
-      meta: {
-        total: filtered.length,
-        page,
-        limit,
-        totalPages: Math.ceil(filtered.length / limit),
-      },
+    sendPaginated(res, paginated, {
+      total: filtered.length,
+      page,
+      limit,
+      totalPages: Math.ceil(filtered.length / limit),
     });
   },
 
@@ -45,11 +43,11 @@ export const productController = {
       : products.find((p) => p.slug === identifier);
 
     if (!product) {
-      res.status(404).json({ error: 'Product not found' });
+      sendNotFound(res, 'Product not found');
       return;
     }
 
-    res.json(product);
+    sendSuccess(res, product);
   },
 
   // POST /products
@@ -64,7 +62,7 @@ export const productController = {
     };
 
     products.push(newProduct);
-    res.status(201).json(newProduct);
+    sendCreated(res, newProduct);
   },
 
   // PUT /products/:id
@@ -73,14 +71,14 @@ export const productController = {
     const index = products.findIndex((p) => p.id === id);
 
     if (index === -1) {
-      res.status(404).json({ error: 'Product not found' });
+      sendNotFound(res, 'Product not found');
       return;
     }
 
     const slug = req.body.name ? generateSlug(req.body.name) : products[index].slug;
 
     products[index] = { ...products[index], ...req.body, slug, updatedAt: new Date() };
-    res.json(products[index]);
+    sendSuccess(res, products[index]);
   },
 
   // DELETE /products/:id
@@ -89,11 +87,11 @@ export const productController = {
     const index = products.findIndex((p) => p.id === id);
 
     if (index === -1) {
-      res.status(404).json({ error: 'Product not found' });
+      sendNotFound(res, 'Product not found');
       return;
     }
 
     const deleted = products.splice(index, 1)[0];
-    res.json(deleted);
+    sendSuccess(res, deleted);
   },
 };

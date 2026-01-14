@@ -7,6 +7,7 @@ export const validate =
 
     if (!result.success) {
       res.status(400).json({
+        success: false,
         error: 'Validation failed',
         details: result.error.issues.map((issue) => ({
           field: issue.path.join('.'),
