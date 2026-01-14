@@ -10,6 +10,7 @@ export const products: Product[] = [
     category: 'food',
     stock: 100,
     createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2025-01-15'),
   },
   {
     id: 2,
@@ -20,5 +21,6 @@ export const products: Product[] = [
     category: 'toys',
     stock: 50,
     createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2025-01-20'),
   },
 ];

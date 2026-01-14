@@ -2,6 +2,8 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { products } from '../data/products.js';
 import { Product } from '../types/product.js';
+import { validate } from '../middleware/validate.js';
+import { createProductSchema, updateProductSchema } from '../schemas/product.js';
 
 const router = Router();
 
@@ -21,18 +23,19 @@ router.get('/:id', (req: Request, res: Response) => {
   res.json(product);
 });
 
-router.post('/', (req: Request, res: Response) => {
+router.post('/', validate(createProductSchema), (req: Request, res: Response) => {
   const newProduct: Product = {
     id: products.length + 1,
     ...req.body,
     createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   products.push(newProduct);
   res.status(201).json(newProduct);
 });
 
-router.put('/:id', (req: Request, res: Response) => {
+router.put('/:id', validate(updateProductSchema), (req: Request, res: Response) => {
   const id = parseInt(req.params.id as string);
   const index = products.findIndex((p) => p.id === id);
 
@@ -41,7 +44,7 @@ router.put('/:id', (req: Request, res: Response) => {
     return;
   }
 
-  products[index] = { ...products[index], ...req.body };
+  products[index] = { ...products[index], ...req.body, updatedAt: new Date() };
   res.json(products[index]);
 });
 
