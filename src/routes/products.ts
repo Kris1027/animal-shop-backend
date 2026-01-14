@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { products } from '../data/products.js';
 import { validate } from '../middleware/validate.js';
 import { createProductSchema, Product, updateProductSchema } from '../schemas/product.js';
+import { generateSlug } from '../utils/slug.js';
 
 const router = Router();
 
@@ -25,7 +26,9 @@ router.get('/:id', (req: Request, res: Response) => {
 router.post('/', validate(createProductSchema), (req: Request, res: Response) => {
   const newProduct: Product = {
     id: products.length + 1,
+    slug: generateSlug(req.body.name),
     ...req.body,
+    banner: req.body.banner ?? null,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -43,7 +46,9 @@ router.put('/:id', validate(updateProductSchema), (req: Request, res: Response) 
     return;
   }
 
-  products[index] = { ...products[index], ...req.body, updatedAt: new Date() };
+  const slug = req.body.name ? generateSlug(req.body.name) : products[index].slug;
+
+  products[index] = { ...products[index], ...req.body, slug, updatedAt: new Date() };
   res.json(products[index]);
 });
 
