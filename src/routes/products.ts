@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { products } from '../data/products.js';
-import { Product } from '../types/product.js';
 import { validate } from '../middleware/validate.js';
-import { createProductSchema, updateProductSchema } from '../schemas/product.js';
+import { createProductSchema, Product, updateProductSchema } from '../schemas/product.js';
 
 const router = Router();
 
