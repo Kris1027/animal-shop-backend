@@ -7,8 +7,35 @@ import { generateSlug } from '../utils/slug.js';
 
 const router = Router();
 
-router.get('/', (_req: Request, res: Response) => {
-  res.json(products);
+router.get('/', (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 10;
+  const category = req.query.category as string | undefined;
+  const isFeatured = req.query.isFeatured as string | undefined;
+
+  let filtered = [...products];
+
+  if (category) {
+    filtered = filtered.filter((p) => p.category === category);
+  }
+
+  if (isFeatured !== undefined) {
+    filtered = filtered.filter((p) => p.isFeatured === (isFeatured === 'true'));
+  }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginated = filtered.slice(startIndex, endIndex);
+
+  res.json({
+    data: paginated,
+    meta: {
+      total: filtered.length,
+      page,
+      limit,
+      totalPages: Math.ceil(filtered.length / limit),
+    },
+  });
 });
 
 router.get('/:identifier', (req: Request, res: Response) => {
