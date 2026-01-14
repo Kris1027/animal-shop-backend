@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import { products } from '../data/products.js';
 import { Product } from '../schemas/product.js';
 import { generateSlug } from '../utils/slug.js';
@@ -46,17 +47,13 @@ export const productService = {
     };
   },
 
-  getByIdentifier: (identifier: string): Product | null => {
-    const product = /^\d+$/.test(identifier)
-      ? products.find((p) => p.id === parseInt(identifier))
-      : products.find((p) => p.slug === identifier);
-
-    return product || null;
+  getByIdentifier: (identifier: string) => {
+    return products.find((p) => p.id === identifier || p.slug === identifier) || null;
   },
 
   create: (data: Omit<Product, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Product => {
     const newProduct: Product = {
-      id: products.length + 1,
+      id: nanoid(),
       slug: generateSlug(data.name),
       ...data,
       banner: data.banner ?? null,
@@ -68,7 +65,7 @@ export const productService = {
     return newProduct;
   },
 
-  update: (id: number, data: Partial<Product>): Product | null => {
+  update: (id: string, data: Partial<Product>): Product | null => {
     const index = products.findIndex((p) => p.id === id);
 
     if (index === -1) {
@@ -81,7 +78,7 @@ export const productService = {
     return products[index];
   },
 
-  remove: (id: number): Product | null => {
+  remove: (id: string): Product | null => {
     const index = products.findIndex((p) => p.id === id);
 
     if (index === -1) {

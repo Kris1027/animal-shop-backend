@@ -2,7 +2,7 @@ import { Product } from '../schemas/product.js';
 
 export const products: Product[] = [
   {
-    id: 1,
+    id: 'abc123xyz',
     slug: 'dog-food-premium',
     name: 'Dog Food Premium',
     price: 49.99,
@@ -16,7 +16,7 @@ export const products: Product[] = [
     updatedAt: new Date('2025-01-15'),
   },
   {
-    id: 2,
+    id: 'def456uvw',
     slug: 'cat-toy-mouse',
     name: 'Cat Toy Mouse',
     price: 9.99,

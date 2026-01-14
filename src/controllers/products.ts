@@ -33,7 +33,7 @@ export const productController = {
 
   // PUT /products/:id
   update: (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
+    const id = req.params.id as string;
     const product = productService.update(id, req.body);
 
     if (!product) {
@@ -46,7 +46,7 @@ export const productController = {
 
   // DELETE /products/:id
   remove: (req: Request, res: Response) => {
-    const id = parseInt(req.params.id as string);
+    const id = req.params.id as string;
     const product = productService.remove(id);
 
     if (!product) {
