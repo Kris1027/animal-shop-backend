@@ -20,3 +20,23 @@ export const validate =
     req.body = result.data;
     next();
   };
+
+export const validateQuery =
+  (schema: z.ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+
+    if (!result.success) {
+      res.status(400).json({
+        success: false,
+        error: `Invalid query parameters`,
+        details: result.error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        })),
+      });
+      return;
+    }
+
+    req.query = result.data as typeof req.query;
+    next();
+  };

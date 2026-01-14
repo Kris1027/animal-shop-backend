@@ -1,14 +1,12 @@
 import type { Request, Response } from 'express';
 import { sendCreated, sendNotFound, sendPaginated, sendSuccess } from '../utils/response.js';
 import { productService } from '../services/products.js';
+import { ProductQuery } from '../schemas/product.js';
 
 export const productController = {
   // GET /products
   getAll: (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const category = req.query.category as string | undefined;
-    const isFeatured = req.query.isFeatured as string | undefined;
+    const { page, limit, category, isFeatured } = req.query as unknown as ProductQuery;
 
     const result = productService.getAll({ page, limit, category, isFeatured });
     sendPaginated(res, result.data, result.meta);

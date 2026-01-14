@@ -31,3 +31,17 @@ export const updateProductSchema = createProductSchema.partial();
 export type Product = z.infer<typeof productSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+export const productQuerySchema = z.object({
+  page: z.coerce.number().positive().optional().default(1),
+  limit: z.coerce.number().positive().max(100).optional().default(10),
+  category: z.string().optional(),
+  isFeatured: z
+    .string()
+    .refine((val) => val === 'true' || val === 'false', {
+      message: `isFeatured must be "true" or "false"`,
+    })
+    .optional(),
+});
+
+export type ProductQuery = z.infer<typeof productQuerySchema>;
