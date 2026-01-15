@@ -6,13 +6,14 @@ import {
   productQuerySchema,
   updateProductSchema,
 } from '../schemas/product.js';
+import { strictLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
 router.get('/', validateQuery(productQuerySchema), productController.getAll);
 router.get('/:identifier', productController.getOne);
-router.post('/', validate(createProductSchema), productController.create);
-router.put('/:id', validate(updateProductSchema), productController.update);
-router.delete('/:id', productController.remove);
+router.post('/', strictLimiter, validate(createProductSchema), productController.create);
+router.put('/:id', strictLimiter, validate(updateProductSchema), productController.update);
+router.delete('/:id', strictLimiter, productController.remove);
 
 export default router;

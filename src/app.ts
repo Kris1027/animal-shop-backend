@@ -4,12 +4,14 @@ import type { Request, Response } from 'express';
 import productRoutes from './routes/products.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { httpLogger } from './middleware/httpLogger.js';
+import { globalLimiter } from './middleware/rate-limiter.js';
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(globalLimiter);
 app.use(httpLogger);
 
 app.get('/', (_req: Request, res: Response) => {
