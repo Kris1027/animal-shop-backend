@@ -7,9 +7,8 @@ import { NotFoundError } from '../utils/errors.js';
 
 export const productController = {
   // GET /products
-  getAll: (req: Request, res: Response) => {
+  getAll: (_req: Request, res: Response) => {
     const { page, limit, category, isFeatured } = res.locals.query as ProductQuery;
-
     const result = productService.getAll({ page, limit, category, isFeatured });
     sendPaginated(res, result.data, result.meta);
   },
@@ -18,11 +17,7 @@ export const productController = {
   getOne: (req: Request, res: Response) => {
     const identifier = req.params.identifier as string;
     const product = productService.getByIdentifier(identifier);
-
-    if (!product) {
-      throw new NotFoundError('Product');
-    }
-
+    if (!product) throw new NotFoundError('Product');
     sendSuccess(res, product);
   },
 
@@ -36,11 +31,7 @@ export const productController = {
   update: (req: Request, res: Response) => {
     const id = req.params.id as string;
     const product = productService.update(id, req.body);
-
-    if (!product) {
-      throw new NotFoundError('Product');
-    }
-
+    if (!product) throw new NotFoundError('Product');
     sendSuccess(res, product);
   },
 
@@ -48,11 +39,7 @@ export const productController = {
   remove: (req: Request, res: Response) => {
     const id = req.params.id as string;
     const product = productService.remove(id);
-
-    if (!product) {
-      throw new NotFoundError('Product');
-    }
-
+    if (!product) throw new NotFoundError('Product');
     sendSuccess(res, product);
   },
 };

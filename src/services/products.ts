@@ -1,8 +1,12 @@
+import type { PaginatedResult } from '../types/pagination.js';
 import type { Product } from '../schemas/product.js';
 
 import { nanoid } from 'nanoid';
 import { products } from '../data/products.js';
 import { generateSlug } from '../utils/slug.js';
+import { categories } from '../data/categories.js';
+import { BadRequestError } from '../utils/errors.js';
+import { paginate } from '../utils/paginate.js';
 
 interface GetAllParams {
   page: number;
@@ -11,15 +15,12 @@ interface GetAllParams {
   isFeatured?: string;
 }
 
-interface PaginatedResult<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
+const validateCategory = (category: string) => {
+  const exists = categories.some((c) => c.id === category || c.slug === category);
+  if (!exists) {
+    throw new BadRequestError(`Category ${category} does not exist`);
+  }
+};
 
 export const productService = {
   getAll: ({ page, limit, category, isFeatured }: GetAllParams): PaginatedResult<Product> => {
@@ -33,19 +34,7 @@ export const productService = {
       filtered = filtered.filter((p) => p.isFeatured === (isFeatured === 'true'));
     }
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginated = filtered.slice(startIndex, endIndex);
-
-    return {
-      data: paginated,
-      meta: {
-        total: filtered.length,
-        page,
-        limit,
-        totalPages: Math.ceil(filtered.length / limit),
-      },
-    };
+    return paginate(filtered, { page, limit });
   },
 
   getByIdentifier: (identifier: string) => {
@@ -53,6 +42,8 @@ export const productService = {
   },
 
   create: (data: Omit<Product, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Product => {
+    validateCategory(data.category);
+
     const newProduct: Product = {
       id: nanoid(),
       slug: generateSlug(data.name),
@@ -71,6 +62,10 @@ export const productService = {
 
     if (index === -1) {
       return null;
+    }
+
+    if (data.category) {
+      validateCategory(data.category);
     }
 
     const existing = products[index]!;

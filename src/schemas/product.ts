@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationQuerySchema } from './pagination.js';
 
 export const productSchema = z.object({
   id: z.string(),
@@ -32,9 +33,7 @@ export type Product = z.infer<typeof productSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 
-export const productQuerySchema = z.object({
-  page: z.coerce.number().positive().optional().default(1),
-  limit: z.coerce.number().positive().max(100).optional().default(10),
+export const productQuerySchema = paginationQuerySchema.extend({
   category: z.string().optional(),
   isFeatured: z
     .string()

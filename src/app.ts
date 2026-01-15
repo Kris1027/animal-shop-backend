@@ -2,11 +2,11 @@ import type { Request, Response } from 'express';
 
 import express from 'express';
 import cors from 'cors';
-import productRoutes from './routes/products.js';
+import routes from './routes/index.js';
+import healthRoutes from './routes/health.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { httpLogger } from './middleware/http-logger.js';
 import { globalLimiter } from './middleware/rate-limiter.js';
-import healthRoutes from './routes/health.js';
 import helmet from 'helmet';
 
 const app = express();
@@ -18,12 +18,11 @@ app.use(cors());
 app.use(healthRoutes);
 app.use(globalLimiter);
 app.use(httpLogger);
+app.use(routes);
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Animal Shop API' });
 });
-
-app.use('/products', productRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({
