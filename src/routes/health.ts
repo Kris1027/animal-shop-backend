@@ -5,6 +5,7 @@ const router = Router();
 
 router.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
+    success: true,
     status: 'ok',
     timestamp: new Date().toISOString(),
   });
@@ -12,6 +13,7 @@ router.get('/health', (_req: Request, res: Response) => {
 
 router.get('/ready', (_req: Request, res: Response) => {
   res.status(200).json({
+    success: true,
     status: 'ready',
     timestamp: new Date().toISOString(),
   });

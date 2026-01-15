@@ -9,6 +9,7 @@ export const validate =
       res.status(400).json({
         success: false,
         error: 'Validation failed',
+        code: 'VALIDATION_ERROR',
         details: result.error.issues.map((issue) => ({
           field: issue.path.join('.'),
           message: issue.message,
@@ -29,6 +30,7 @@ export const validateQuery =
       res.status(400).json({
         success: false,
         error: `Invalid query parameters`,
+        code: 'VALIDATION_ERROR',
         details: result.error.issues.map((issue) => ({
           field: issue.path.join('.'),
           message: issue.message,

@@ -3,7 +3,7 @@ import cors from 'cors';
 import type { Request, Response } from 'express';
 import productRoutes from './routes/products.js';
 import { errorHandler } from './middleware/error-handler.js';
-import { httpLogger } from './middleware/httpLogger.js';
+import { httpLogger } from './middleware/http-logger.js';
 import { globalLimiter } from './middleware/rate-limiter.js';
 import healthRoutes from './routes/health.js';
 
