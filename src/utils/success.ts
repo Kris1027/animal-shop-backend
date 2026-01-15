@@ -15,11 +15,3 @@ export const sendPaginated = <T>(
 ) => {
   res.status(200).json({ success: true, data, meta });
 };
-
-export const sendError = (res: Response, message: string, status = 400) => {
-  res.status(status).json({ success: false, error: message });
-};
-
-export const sendNotFound = (res: Response, message = 'Resource not found') => {
-  res.status(404).json({ success: false, error: message });
-};

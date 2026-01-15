@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
-import { sendCreated, sendNotFound, sendPaginated, sendSuccess } from '../utils/response.js';
+import { sendCreated, sendPaginated, sendSuccess } from '../utils/success.js';
 import { productService } from '../services/products.js';
 import { ProductQuery } from '../schemas/product.js';
+import { NotFoundError } from '../utils/errors.js';
 
 export const productController = {
   // GET /products
@@ -18,8 +19,7 @@ export const productController = {
     const product = productService.getByIdentifier(identifier);
 
     if (!product) {
-      sendNotFound(res, 'Product not found');
-      return;
+      throw new NotFoundError('Product');
     }
 
     sendSuccess(res, product);
@@ -37,8 +37,7 @@ export const productController = {
     const product = productService.update(id, req.body);
 
     if (!product) {
-      sendNotFound(res, 'Product not found');
-      return;
+      throw new NotFoundError('Product');
     }
 
     sendSuccess(res, product);
@@ -50,8 +49,7 @@ export const productController = {
     const product = productService.remove(id);
 
     if (!product) {
-      sendNotFound(res, 'Product not found');
-      return;
+      throw new NotFoundError('Product');
     }
 
     sendSuccess(res, product);
