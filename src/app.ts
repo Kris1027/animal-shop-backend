@@ -2,11 +2,12 @@ import type { Request, Response } from 'express';
 
 import express from 'express';
 import cors from 'cors';
+import healthRoutes from './routes/health.js';
 import productRoutes from './routes/products.js';
+import categoryRoutes from './routes/categories.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { httpLogger } from './middleware/http-logger.js';
 import { globalLimiter } from './middleware/rate-limiter.js';
-import healthRoutes from './routes/health.js';
 import helmet from 'helmet';
 
 const app = express();
@@ -24,6 +25,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 app.use('/products', productRoutes);
+app.use('/categories', categoryRoutes);
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({
