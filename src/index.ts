@@ -5,6 +5,7 @@ import productRoutes from './routes/products.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { httpLogger } from './middleware/httpLogger.js';
 import { logger } from './utils/logger.js';
+import { env } from './config/env.js';
 
 process.on('uncaughtException', (err) => {
   logger.fatal(err, 'Uncaught Exception');
@@ -17,7 +18,6 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -41,6 +41,6 @@ app.use((req: Request, res: Response) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, 'Server running');
+app.listen(env.PORT, () => {
+  logger.info({ port: env.PORT }, 'Server running');
 });
