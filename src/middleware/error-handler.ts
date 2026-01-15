@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 export const errorHandler = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
@@ -11,7 +12,7 @@ export const errorHandler = (err: unknown, _req: Request, res: Response, _next: 
     return;
   }
 
-  console.error('Unexpected error:', err);
+  logger.error(err, 'Unexpected error:');
   res.status(500).json({
     success: false,
     error: 'Internal server error',

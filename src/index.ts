@@ -3,14 +3,16 @@ import cors from 'cors';
 import type { Request, Response } from 'express';
 import productRoutes from './routes/products.js';
 import { errorHandler } from './middleware/error-handler.js';
+import { httpLogger } from './middleware/httpLogger.js';
+import { logger } from './utils/logger.js';
 
 process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception', err);
+  logger.fatal(err, 'Uncaught Exception');
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
-  console.error('Unhandled Rejection', reason);
+  logger.fatal(reason, 'Unhandled Rejection');
   process.exit(1);
 });
 
@@ -20,6 +22,8 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+
+app.use(httpLogger);
 
 app.get('/', (_req: Request, res: Response) => {
   res.json({ message: 'Animal Shop API' });
@@ -38,5 +42,5 @@ app.use((req: Request, res: Response) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info({ port: PORT }, 'Server running');
 });
