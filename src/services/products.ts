@@ -3,6 +3,8 @@ import type { Product } from '../schemas/product.js';
 import { nanoid } from 'nanoid';
 import { products } from '../data/products.js';
 import { generateSlug } from '../utils/slug.js';
+import { categories } from '../data/categories.js';
+import { BadRequestError } from '../utils/errors.js';
 
 interface GetAllParams {
   page: number;
@@ -20,6 +22,13 @@ interface PaginatedResult<T> {
     totalPages: number;
   };
 }
+
+const validateCategory = (category: string) => {
+  const exists = categories.some((c) => c.id === category || c.slug === category);
+  if (!exists) {
+    throw new BadRequestError(`Category ${category} does not exist`);
+  }
+};
 
 export const productService = {
   getAll: ({ page, limit, category, isFeatured }: GetAllParams): PaginatedResult<Product> => {
@@ -53,6 +62,8 @@ export const productService = {
   },
 
   create: (data: Omit<Product, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Product => {
+    validateCategory(data.category);
+
     const newProduct: Product = {
       id: nanoid(),
       slug: generateSlug(data.name),
@@ -71,6 +82,10 @@ export const productService = {
 
     if (index === -1) {
       return null;
+    }
+
+    if (data.category) {
+      validateCategory(data.category);
     }
 
     const existing = products[index]!;
