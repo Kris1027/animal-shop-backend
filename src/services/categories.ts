@@ -5,6 +5,8 @@ import { nanoid } from 'nanoid';
 import { categories } from '../data/categories.js';
 import { generateSlug } from '../utils/slug.js';
 import { paginate } from '../utils/paginate.js';
+import { products } from '../data/products.js';
+import { BadRequestError } from '../utils/errors.js';
 
 interface GetAllParams {
   page: number;
@@ -48,6 +50,16 @@ export const categoryService = {
   remove: (id: string): Category | null => {
     const index = categories.findIndex((c) => c.id === id);
     if (index === -1) return null;
+
+    const category = categories[index]!;
+    const hasProducts = products.some(
+      (p) => p.category === category.id || p.category === category.slug
+    );
+
+    if (hasProducts) {
+      throw new BadRequestError('Cannot delete category with existing products');
+    }
+
     return categories.splice(index, 1)[0] ?? null;
   },
 };
