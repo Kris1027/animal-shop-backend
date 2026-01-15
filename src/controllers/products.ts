@@ -6,7 +6,7 @@ import { ProductQuery } from '../schemas/product.js';
 export const productController = {
   // GET /products
   getAll: (req: Request, res: Response) => {
-    const { page, limit, category, isFeatured } = req.query as unknown as ProductQuery;
+    const { page, limit, category, isFeatured } = res.locals.query as ProductQuery;
 
     const result = productService.getAll({ page, limit, category, isFeatured });
     sendPaginated(res, result.data, result.meta);

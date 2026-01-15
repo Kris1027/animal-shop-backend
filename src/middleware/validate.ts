@@ -37,6 +37,6 @@ export const validateQuery =
       return;
     }
 
-    req.query = result.data as typeof req.query;
+    res.locals.query = result.data;
     next();
   };
