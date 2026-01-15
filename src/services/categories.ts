@@ -1,11 +1,19 @@
+import type { Category } from '../schemas/category.js';
+import type { PaginatedResult } from '../types/pagination.js';
+
 import { nanoid } from 'nanoid';
 import { categories } from '../data/categories.js';
-import type { Category } from '../schemas/category.js';
 import { generateSlug } from '../utils/slug.js';
+import { paginate } from '../utils/paginate.js';
+
+interface GetAllParams {
+  page: number;
+  limit: number;
+}
 
 export const categoryService = {
-  getAll: () => {
-    return categories;
+  getAll: ({ page, limit }: GetAllParams): PaginatedResult<Category> => {
+    return paginate(categories, { page, limit });
   },
 
   getByIdentifier: (identifier: string) => {

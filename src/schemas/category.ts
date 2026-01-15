@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationQuerySchema } from './pagination.js';
 
 export const categorySchema = z.object({
   id: z.string(),
@@ -23,7 +24,9 @@ export const createCategorySchema = categorySchema
   });
 
 export const updateCategorySchema = createCategorySchema.partial();
+export const categoryQuerySchema = paginationQuerySchema;
 
 export type Category = z.infer<typeof categorySchema>;
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;
+export type CategoryQuery = z.infer<typeof categoryQuerySchema>;

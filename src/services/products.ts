@@ -1,3 +1,4 @@
+import type { PaginatedResult } from '../types/pagination.js';
 import type { Product } from '../schemas/product.js';
 
 import { nanoid } from 'nanoid';
@@ -5,22 +6,13 @@ import { products } from '../data/products.js';
 import { generateSlug } from '../utils/slug.js';
 import { categories } from '../data/categories.js';
 import { BadRequestError } from '../utils/errors.js';
+import { paginate } from '../utils/paginate.js';
 
 interface GetAllParams {
   page: number;
   limit: number;
   category?: string;
   isFeatured?: string;
-}
-
-interface PaginatedResult<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
 }
 
 const validateCategory = (category: string) => {
@@ -42,19 +34,7 @@ export const productService = {
       filtered = filtered.filter((p) => p.isFeatured === (isFeatured === 'true'));
     }
 
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginated = filtered.slice(startIndex, endIndex);
-
-    return {
-      data: paginated,
-      meta: {
-        total: filtered.length,
-        page,
-        limit,
-        totalPages: Math.ceil(filtered.length / limit),
-      },
-    };
+    return paginate(filtered, { page, limit });
   },
 
   getByIdentifier: (identifier: string) => {

@@ -1,12 +1,14 @@
 import type { Request, Response } from 'express';
 import { categoryService } from '../services/categories.js';
-import { sendCreated, sendSuccess } from '../utils/success.js';
+import { sendCreated, sendPaginated, sendSuccess } from '../utils/success.js';
 import { NotFoundError } from '../utils/errors.js';
+import type { CategoryQuery } from '../schemas/category.js';
 
 export const categoryController = {
   getAll: (_req: Request, res: Response) => {
-    const result = categoryService.getAll();
-    sendSuccess(res, result);
+    const { page, limit } = res.locals.query as CategoryQuery;
+    const result = categoryService.getAll({ page, limit });
+    sendPaginated(res, result.data, result.meta);
   },
 
   getOne: (req: Request, res: Response) => {
