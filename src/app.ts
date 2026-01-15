@@ -1,14 +1,17 @@
+import type { Request, Response } from 'express';
+
 import express from 'express';
 import cors from 'cors';
-import type { Request, Response } from 'express';
 import productRoutes from './routes/products.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { httpLogger } from './middleware/http-logger.js';
 import { globalLimiter } from './middleware/rate-limiter.js';
 import healthRoutes from './routes/health.js';
+import helmet from 'helmet';
 
 const app = express();
 
+app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());

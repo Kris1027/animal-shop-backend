@@ -1,4 +1,4 @@
-import { Product } from '../schemas/product.js';
+import type { Product } from '../schemas/product.js';
 
 export const products: Product[] = [
   {

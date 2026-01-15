@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
+import type { ProductQuery } from '../schemas/product.js';
+
 import { sendCreated, sendPaginated, sendSuccess } from '../utils/success.js';
 import { productService } from '../services/products.js';
-import { ProductQuery } from '../schemas/product.js';
 import { NotFoundError } from '../utils/errors.js';
 
 export const productController = {

@@ -12,13 +12,16 @@
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
-    "format:check": "prettier --check src"
+    "format:check": "prettier --check src",
+    "check": "prettier --check src && eslint src && tsc",
+    "pre-commit": "prettier --write src && eslint src && tsc"
   },
   "keywords": [],
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
     "nanoid": "^5.1.6",
     "pino": "^10.2.0",
     "pino-http": "^11.0.0",

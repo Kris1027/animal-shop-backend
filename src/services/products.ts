@@ -1,6 +1,7 @@
+import type { Product } from '../schemas/product.js';
+
 import { nanoid } from 'nanoid';
 import { products } from '../data/products.js';
-import { Product } from '../schemas/product.js';
 import { generateSlug } from '../utils/slug.js';
 
 interface GetAllParams {
@@ -72,10 +73,12 @@ export const productService = {
       return null;
     }
 
-    const slug = data.name ? generateSlug(data.name) : products[index].slug;
+    const existing = products[index]!;
+    const slug = data.name ? generateSlug(data.name) : existing.slug;
 
-    products[index] = { ...products[index], ...data, slug, updatedAt: new Date() };
-    return products[index];
+    const updated: Product = { ...existing, ...data, slug, updatedAt: new Date() };
+    products[index] = updated;
+    return updated;
   },
 
   remove: (id: string): Product | null => {
@@ -85,6 +88,6 @@ export const productService = {
       return null;
     }
 
-    return products.splice(index, 1)[0];
+    return products.splice(index, 1)[0] ?? null;
   },
 };
