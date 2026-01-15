@@ -1,5 +1,6 @@
+import type { PaginatedResult, PaginationParams } from '../types/pagination.js';
 import type { Category } from '../schemas/category.js';
-import type { PaginatedResult } from '../types/pagination.js';
+import type { Product } from '../schemas/product.js';
 
 import { nanoid } from 'nanoid';
 import { categories } from '../data/categories.js';
@@ -20,6 +21,19 @@ export const categoryService = {
 
   getByIdentifier: (identifier: string) => {
     return categories.find((c) => c.id === identifier || c.slug === identifier) ?? null;
+  },
+
+  getProductsByCategory: (
+    identifier: string,
+    { page, limit }: PaginationParams
+  ): PaginatedResult<Product> | null => {
+    const category = categories.find((c) => c.id === identifier || c.slug === identifier);
+    if (!category) return null;
+
+    const categoryProducts = products.filter(
+      (p) => p.category === category.id || p.category === category.slug
+    );
+    return paginate(categoryProducts, { page, limit });
   },
 
   create: (data: Omit<Category, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Category => {

@@ -18,6 +18,14 @@ export const categoryController = {
     sendSuccess(res, category);
   },
 
+  getProductsByCategory: (req: Request, res: Response) => {
+    const identifier = req.params.identifier as string;
+    const { page, limit } = res.locals.query as CategoryQuery;
+    const result = categoryService.getProductsByCategory(identifier, { page, limit });
+    if (!result) throw new NotFoundError('Category');
+    sendPaginated(res, result.data, result.meta);
+  },
+
   create: (req: Request, res: Response) => {
     const category = categoryService.create(req.body);
     sendCreated(res, category);

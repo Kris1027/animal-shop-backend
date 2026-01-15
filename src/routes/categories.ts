@@ -11,6 +11,11 @@ import {
 const router = Router();
 
 router.get('/', validateQuery(categoryQuerySchema), categoryController.getAll);
+router.get(
+  '/:identifier/products',
+  validateQuery(categoryQuerySchema),
+  categoryController.getProductsByCategory
+);
 router.get('/:identifier', categoryController.getOne);
 router.post('/', strictLimiter, validate(createCategorySchema), categoryController.create);
 router.put('/:id', strictLimiter, validate(updateCategorySchema), categoryController.update);
