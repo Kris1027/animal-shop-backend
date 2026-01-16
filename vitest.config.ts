@@ -5,6 +5,9 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['src/**/*.test.ts'],
+    env: {
+      LOG_LEVEL: 'silent',
+    },
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
