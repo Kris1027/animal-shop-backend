@@ -7,13 +7,26 @@ import {
   updateProductSchema,
 } from '../schemas/product.js';
 import { strictLimiter } from '../middleware/rate-limiter.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
 
 router.get('/', validateQuery(productQuerySchema), productController.getAll);
 router.get('/:identifier', productController.getOne);
-router.post('/', strictLimiter, validate(createProductSchema), productController.create);
-router.put('/:id', strictLimiter, validate(updateProductSchema), productController.update);
-router.delete('/:id', strictLimiter, productController.remove);
+router.post(
+  '/',
+  authenticate,
+  strictLimiter,
+  validate(createProductSchema),
+  productController.create
+);
+router.put(
+  '/:id',
+  authenticate,
+  strictLimiter,
+  validate(updateProductSchema),
+  productController.update
+);
+router.delete('/:id', authenticate, strictLimiter, productController.remove);
 
 export default router;
