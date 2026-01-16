@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
-import { orders } from '../data/orders.js';
-import { products } from '../data/products.js';
-import { addresses } from '../data/addresses.js';
-import { getAdminToken, getUserToken } from '../tests/helpers.js';
+import app from '../../src/app.js';
+import { orders } from '../../src/data/orders.js';
+import { products } from '../../src/data/products.js';
+import { addresses } from '../../src/data/addresses.js';
+import { getAdminToken, getUserToken } from '../helpers.js';
 
 describe('Orders API', () => {
   const userToken = getUserToken();

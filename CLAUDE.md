@@ -17,24 +17,39 @@ npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage report
 ```
 
-Run a single test file:
+Run specific tests:
 ```bash
-npx vitest run src/routes/auth.test.ts
+npx vitest run tests/unit              # Unit tests only
+npx vitest run tests/integration       # Integration tests only
+npx vitest run tests/integration/auth.test.ts  # Single file
 ```
 
 ## Architecture
 
 Express 5 REST API with TypeScript, using in-memory data storage.
 
+### Project Structure
+
+```
+src/                    # Application source code
+├── routes/             # Express routers with middleware
+├── controllers/        # HTTP request/response handling
+├── services/           # Business logic
+├── data/               # In-memory arrays
+├── schemas/            # Zod schemas for validation
+├── middleware/         # Auth, validation, error handling
+└── utils/              # Helpers (errors, success responses)
+
+tests/                  # All test files (separate from src)
+├── helpers.ts          # Test utilities (getAdminToken, getUserToken)
+├── unit/               # Unit tests
+│   └── services/       # Service layer tests
+└── integration/        # API integration tests
+```
+
 ### Layer Structure
 
 Each feature follows: `routes → controllers → services → data`
-
-- **routes/** - Express routers with middleware (auth, validation)
-- **controllers/** - HTTP request/response handling
-- **services/** - Business logic
-- **data/** - In-memory arrays (products, categories, users, addresses)
-- **schemas/** - Zod schemas for validation and TypeScript types
 
 ### Key Patterns
 
@@ -58,4 +73,4 @@ Required in `.env`:
 
 ### Testing
 
-Vitest + Supertest for integration tests. Tests use actual app instance with in-memory data. Reset data arrays in `beforeEach`. Use `getAdminToken()` and `getUserToken()` from `src/tests/helpers.ts` for authenticated requests.
+Vitest + Supertest for integration tests. Tests use actual app instance with in-memory data. Reset data arrays in `beforeEach`. Use `getAdminToken()` and `getUserToken()` from `tests/helpers.ts` for authenticated requests.

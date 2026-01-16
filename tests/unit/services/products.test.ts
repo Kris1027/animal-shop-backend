@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { productService } from './products.js';
-import { products } from '../data/products.js';
-import { categories } from '../data/categories.js';
+import { productService } from '../../../src/services/products.js';
+import { products } from '../../../src/data/products.js';
+import { categories } from '../../../src/data/categories.js';
 
 const validProduct = {
   name: 'Dog Food',

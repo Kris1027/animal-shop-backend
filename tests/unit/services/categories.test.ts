@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { categoryService } from './categories.js';
-import { categories } from '../data/categories.js';
-import { products } from '../data/products.js';
+import { categoryService } from '../../../src/services/categories.js';
+import { categories } from '../../../src/data/categories.js';
+import { products } from '../../../src/data/products.js';
 
 describe('categoryService', () => {
   beforeEach(() => {
