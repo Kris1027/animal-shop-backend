@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+
 import { authService } from '../services/auth.js';
 import { sendCreated, sendSuccess } from '../utils/success.js';
 import { NotFoundError } from '../utils/errors.js';

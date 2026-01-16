@@ -38,7 +38,7 @@ export const productService = {
   },
 
   getByIdentifier: (identifier: string) => {
-    return products.find((p) => p.id === identifier || p.slug === identifier) || null;
+    return products.find((p) => p.id === identifier || p.slug === identifier) ?? null;
   },
 
   create: (data: Omit<Product, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Product => {
