@@ -65,4 +65,16 @@ export const authService = {
       throw new UnauthorizedError('Invalid or expired token');
     }
   },
+
+  updateRole: (userId: string, role: 'user' | 'admin'): Omit<User, 'password'> | null => {
+    const index = users.findIndex((u) => u.id === userId);
+    if (index === -1) return null;
+
+    const user = users[index]!;
+    user.role = role;
+    user.updatedAt = new Date();
+
+    const { password: _password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+  },
 };

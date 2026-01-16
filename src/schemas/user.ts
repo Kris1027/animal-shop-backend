@@ -19,3 +19,9 @@ export const loginSchema = registerSchema;
 export type User = z.infer<typeof userSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+
+export const updateRoleSchema = z.object({
+  role: z.enum(['user', 'admin']),
+});
+
+export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;

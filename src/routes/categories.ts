@@ -7,7 +7,7 @@ import {
   createCategorySchema,
   updateCategorySchema,
 } from '../schemas/category.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -21,6 +21,7 @@ router.get('/:identifier', categoryController.getOne);
 router.post(
   '/',
   authenticate,
+  authorize('admin'),
   strictLimiter,
   validate(createCategorySchema),
   categoryController.create
@@ -28,10 +29,11 @@ router.post(
 router.put(
   '/:id',
   authenticate,
+  authorize('admin'),
   strictLimiter,
   validate(updateCategorySchema),
   categoryController.update
 );
-router.delete('/:id', authenticate, strictLimiter, categoryController.remove);
+router.delete('/:id', authenticate, authorize('admin'), strictLimiter, categoryController.remove);
 
 export default router;
