@@ -43,10 +43,11 @@ export const productService = {
 
   create: (data: Omit<Product, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Product => {
     validateCategory(data.category);
+    const existingSlugs = products.map((p) => p.slug);
 
     const newProduct: Product = {
       id: nanoid(),
-      slug: generateSlug(data.name),
+      slug: generateSlug(data.name, existingSlugs),
       ...data,
       banner: data.banner ?? null,
       createdAt: new Date(),
@@ -59,6 +60,7 @@ export const productService = {
 
   update: (id: string, data: Partial<Product>): Product | null => {
     const index = products.findIndex((p) => p.id === id);
+    const existingSlugs = products.filter((p) => p.id !== id).map((p) => p.slug);
 
     if (index === -1) {
       return null;
@@ -69,7 +71,7 @@ export const productService = {
     }
 
     const existing = products[index]!;
-    const slug = data.name ? generateSlug(data.name) : existing.slug;
+    const slug = data.name ? generateSlug(data.name, existingSlugs) : existing.slug;
 
     const updated: Product = { ...existing, ...data, slug, updatedAt: new Date() };
     products[index] = updated;
