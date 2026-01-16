@@ -16,7 +16,9 @@ export interface TokenPayload {
 }
 
 export const authService = {
-  register: async (data: RegisterInput): Promise<Omit<User, 'password'>> => {
+  register: async (
+    data: RegisterInput
+  ): Promise<{ user: Omit<User, 'password'>; token: string }> => {
     const exists = users.find((u) => u.email === data.email);
     if (exists) throw new BadRequestError('Email already registered');
 
@@ -33,8 +35,18 @@ export const authService = {
 
     users.push(user);
 
+    const payload: TokenPayload = {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = jwt.sign(payload, env.JWT_SECRET, {
+      expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+    });
+
     const { password: _password, ...userWithoutPassword } = user;
-    return userWithoutPassword;
+    return { user: userWithoutPassword, token };
   },
 
   login: async (data: LoginInput): Promise<{ user: Omit<User, 'password'>; token: string }> => {
