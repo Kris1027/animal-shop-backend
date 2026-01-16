@@ -6,5 +6,7 @@ node_modules
 .env.*.local
 !.env.example
 
+coverage
+
 .claude
 .mcp*

@@ -26,6 +26,56 @@ describe('Products API', () => {
     });
   });
 
+  describe('GET /products/:identifier', () => {
+    it('should return product by id', async () => {
+      products.push({
+        id: '123',
+        slug: 'dog-food',
+        name: 'Dog Food',
+        price: 10,
+        description: 'Food',
+        image: 'https://example.com/img.jpg',
+        banner: null,
+        category: 'dogs',
+        stock: 5,
+        isFeatured: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const response = await request(app).get('/products/123').expect(200);
+
+      expect(response.body.data.name).toBe('Dog Food');
+    });
+
+    it('should return product by slug', async () => {
+      products.push({
+        id: '123',
+        slug: 'dog-food',
+        name: 'Dog Food',
+        price: 10,
+        description: 'Food',
+        image: 'https://example.com/img.jpg',
+        banner: null,
+        category: 'dogs',
+        stock: 5,
+        isFeatured: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const response = await request(app).get('/products/dog-food').expect(200);
+
+      expect(response.body.data.name).toBe('Dog Food');
+    });
+
+    it('should return 404 when not found', async () => {
+      const response = await request(app).get('/products/nonexistent').expect(404);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
+
   describe('POST /products', () => {
     it('should create product', async () => {
       const response = await request(app)
