@@ -16,6 +16,10 @@ export interface TokenPayload {
 }
 
 export const authService = {
+  getAll: (): Omit<User, 'password'>[] => {
+    return users.map(({ password: _password, ...user }) => user);
+  },
+
   register: async (
     data: RegisterInput
   ): Promise<{ user: Omit<User, 'password'>; token: string }> => {

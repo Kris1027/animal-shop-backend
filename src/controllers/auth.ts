@@ -4,6 +4,12 @@ import { sendCreated, sendSuccess } from '../utils/success.js';
 import { NotFoundError } from '../utils/errors.js';
 
 export const authController = {
+  // GET /auth/users
+  getAll: (_req: Request, res: Response) => {
+    const users = authService.getAll();
+    sendSuccess(res, users);
+  },
+
   // POST /auth/register
   register: async (req: Request, res: Response) => {
     const user = await authService.register(req.body);

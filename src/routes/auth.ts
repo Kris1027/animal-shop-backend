@@ -7,6 +7,7 @@ import { strictLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
+router.get('/users', authenticate, authorize('admin'), authController.getAll);
 router.post(
   '/register',
   rejectAuthenticated,
