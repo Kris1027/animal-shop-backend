@@ -1,7 +1,7 @@
 import type { User } from '../schemas/user.js';
 
 // Password for all seed users: "password123"
-// Hash generated with: bcrypt.hash('password123', 12
+// Hash generated with: bcrypt.hash('password123', 12)
 const SEED_PASSWORD_HASH = '$2b$12$VmEqQCyUX2uAPCcnQ3RvROlCI2v3O9XTGvLWqX5LRhz9bfFPq60LG';
 
 export const users: User[] = [

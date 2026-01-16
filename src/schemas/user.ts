@@ -10,7 +10,7 @@ export const userSchema = z.object({
 });
 
 export const registerSchema = z.object({
-  email: z.email({ message: 'Valid email is required' }),
+  email: z.email({ message: 'A Valid email is required' }),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
