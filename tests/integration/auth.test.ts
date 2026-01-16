@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
-import { users } from '../data/users.js';
-import { getAdminToken } from '../tests/helpers.js';
-import type { User } from '../schemas/user.js';
+import app from '../../src/app.js';
+import { users } from '../../src/data/users.js';
+import { getAdminToken } from '../helpers.js';
+import type { User } from '../../src/schemas/user.js';
 
 const adminToken = getAdminToken();
 
@@ -136,7 +136,6 @@ describe('Auth API', () => {
     });
 
     it('should return 403 for non-admin', async () => {
-      // First login as regular user to get token
       const loginResponse = await request(app)
         .post('/auth/login')
         .send({ email: 'john@example.com', password: 'password123' });

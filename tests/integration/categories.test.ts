@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
-import { categories } from '../data/categories.js';
-import { products } from '../data/products.js';
-import { getAdminToken } from '../tests/helpers.js';
+import app from '../../src/app.js';
+import { categories } from '../../src/data/categories.js';
+import { products } from '../../src/data/products.js';
+import { getAdminToken } from '../helpers.js';
 
 const adminToken = getAdminToken();
 

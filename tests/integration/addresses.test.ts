@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
-import app from '../app.js';
-import { addresses } from '../data/addresses.js';
-import { getUserToken } from '../tests/helpers.js';
+import app from '../../src/app.js';
+import { addresses } from '../../src/data/addresses.js';
+import { getUserToken } from '../helpers.js';
 
 const userToken = getUserToken();
 

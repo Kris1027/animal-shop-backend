@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
+import { env } from '../src/config/env.js';
 
 export const getAdminToken = (): string => {
   return jwt.sign(
