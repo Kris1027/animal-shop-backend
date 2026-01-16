@@ -4,6 +4,12 @@ import { nanoid } from 'nanoid';
 import { addresses } from '../data/addresses.js';
 import { NotFoundError } from '../utils/errors.js';
 
+const clearUserDefaults = (userId: string): void => {
+  addresses.forEach((a) => {
+    if (a.userId === userId) a.isDefault = false;
+  });
+};
+
 export const addressService = {
   getAllByUser: (userId: string): Address[] => {
     return addresses.filter((a) => a.userId === userId);
@@ -16,13 +22,12 @@ export const addressService = {
   },
 
   create: (userId: string, data: CreateAddressInput): Address => {
-    if (data.isDefault) {
-      addresses.forEach((a) => {
-        if (a.userId === userId) a.isDefault = false;
-      });
+    const userAddresses = addresses.filter((a) => a.userId === userId);
+
+    if (data.isDefault && userAddresses.length > 0) {
+      clearUserDefaults(userId);
     }
 
-    const userAddresses = addresses.filter((a) => a.userId === userId);
     const isDefault = userAddresses.length === 0 ? true : (data.isDefault ?? false);
 
     const address: Address = {
@@ -52,9 +57,7 @@ export const addressService = {
     if (index === -1) throw new NotFoundError('Address');
 
     if (data.isDefault) {
-      addresses.forEach((a) => {
-        if (a.userId === userId) a.isDefault = false;
-      });
+      clearUserDefaults(userId);
     }
 
     const address = addresses[index]!;

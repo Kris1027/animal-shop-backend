@@ -2,16 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
 import { addresses } from '../data/addresses.js';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env.js';
-
-const getUserToken = (userId: string = 'user-001'): string => {
-  return jwt.sign({ userId, email: 'john@example.com', role: 'user' }, env.JWT_SECRET, {
-    expiresIn: '1h',
-    issuer: 'animal-shop-api',
-    audience: 'animal-shop-client',
-  });
-};
+import { getUserToken } from '../tests/helpers.js';
 
 const userToken = getUserToken();
 
