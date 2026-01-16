@@ -29,5 +29,6 @@ router.patch(
   validate(updateRoleSchema),
   authController.updateRole
 );
+router.post('/logout', authenticate, authController.logout);
 
 export default router;

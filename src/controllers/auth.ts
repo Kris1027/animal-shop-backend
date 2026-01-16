@@ -29,4 +29,9 @@ export const authController = {
     if (!user) throw new NotFoundError('User');
     sendSuccess(res, user);
   },
+
+  // POST /auth/logout
+  logout: (_req: Request, res: Response) => {
+    sendSuccess(res, { message: 'Logged out successfully' });
+  },
 };
