@@ -8,3 +8,14 @@ export const getAdminToken = (): string => {
     { expiresIn: '1h', issuer: 'animal-shop-api', audience: 'animal-shop-client' }
   );
 };
+
+export const getUserToken = (
+  userId: string = 'user-001',
+  email: string = 'john@example.com'
+): string => {
+  return jwt.sign({ userId, email, role: 'user' }, env.JWT_SECRET, {
+    expiresIn: '1h',
+    issuer: 'animal-shop-api',
+    audience: 'animal-shop-client',
+  });
+};
