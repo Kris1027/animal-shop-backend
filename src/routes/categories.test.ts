@@ -3,6 +3,9 @@ import request from 'supertest';
 import app from '../app.js';
 import { categories } from '../data/categories.js';
 import { products } from '../data/products.js';
+import { getAdminToken } from '../tests/helpers.js';
+
+const adminToken = getAdminToken();
 
 describe('Categories API', () => {
   beforeEach(() => {
@@ -61,14 +64,22 @@ describe('Categories API', () => {
 
   describe('POST /categories', () => {
     it('should create category', async () => {
-      const response = await request(app).post('/categories').send({ name: 'Dogs' }).expect(201);
+      const response = await request(app)
+        .post('/categories')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Dogs' })
+        .expect(201);
 
       expect(response.body.data.name).toBe('Dogs');
       expect(response.body.data.slug).toBe('dogs');
     });
 
     it('should return 400 for invalid data', async () => {
-      const response = await request(app).post('/categories').send({}).expect(400);
+      const response = await request(app)
+        .post('/categories')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({})
+        .expect(400);
 
       expect(response.body.success).toBe(false);
     });
@@ -86,14 +97,22 @@ describe('Categories API', () => {
         updatedAt: new Date(),
       });
 
-      const response = await request(app).put('/categories/123').send({ name: 'Cats' }).expect(200);
+      const response = await request(app)
+        .put('/categories/123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Cats' })
+        .expect(200);
 
       expect(response.body.data.name).toBe('Cats');
       expect(response.body.data.slug).toBe('cats');
     });
 
     it('should return 404 when not found', async () => {
-      await request(app).put('/categories/nonexistent').send({ name: 'Cats' }).expect(404);
+      await request(app)
+        .put('/categories/nonexistent')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ name: 'Cats' })
+        .expect(404);
     });
   });
 
@@ -109,13 +128,19 @@ describe('Categories API', () => {
         updatedAt: new Date(),
       });
 
-      await request(app).delete('/categories/123').expect(200);
+      await request(app)
+        .delete('/categories/123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
 
       expect(categories).toHaveLength(0);
     });
 
     it('should return 404 when not found', async () => {
-      await request(app).delete('/categories/nonexistent').expect(404);
+      await request(app)
+        .delete('/categories/nonexistent')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(404);
     });
 
     it('should return 400 when category has products', async () => {
@@ -143,7 +168,10 @@ describe('Categories API', () => {
         updatedAt: new Date(),
       });
 
-      await request(app).delete('/categories/123').expect(400);
+      await request(app)
+        .delete('/categories/123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(400);
     });
   });
 
