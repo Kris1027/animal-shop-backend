@@ -3,6 +3,9 @@ import request from 'supertest';
 import app from '../app.js';
 import { products } from '../data/products.js';
 import { categories } from '../data/categories.js';
+import { getAdminToken } from '../tests/helpers.js';
+
+const adminToken = getAdminToken();
 
 describe('Products API', () => {
   beforeEach(() => {
@@ -80,6 +83,7 @@ describe('Products API', () => {
     it('should create product', async () => {
       const response = await request(app)
         .post('/products')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Dog Food',
           price: 29.99,
@@ -96,6 +100,7 @@ describe('Products API', () => {
     it('should return 400 for invalid category', async () => {
       const response = await request(app)
         .post('/products')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({
           name: 'Dog Food',
           price: 29.99,
@@ -129,6 +134,7 @@ describe('Products API', () => {
 
       const response = await request(app)
         .put('/products/123')
+        .set('Authorization', `Bearer ${adminToken}`)
         .send({ name: 'Cat Food' })
         .expect(200);
 
@@ -153,7 +159,10 @@ describe('Products API', () => {
         updatedAt: new Date(),
       });
 
-      await request(app).delete('/products/123').expect(200);
+      await request(app)
+        .delete('/products/123')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
       expect(products).toHaveLength(0);
     });
   });
