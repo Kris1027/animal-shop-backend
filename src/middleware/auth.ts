@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 
 import { authService } from '../services/auth.js';
-import { UnauthorizedError, ForbiddenError } from '../utils/errors.js';
+import { UnauthorizedError, ForbiddenError, BadRequestError } from '../utils/errors.js';
 
 export const authenticate = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
@@ -20,4 +20,21 @@ export const authorize = (...roles: string[]) => {
 
     next();
   };
+};
+
+export const rejectAuthenticated = (req: Request, _res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+
+    try {
+      authService.verifyToken(token);
+      throw new BadRequestError('Already authenticated. Logout first.');
+    } catch (error) {
+      if (error instanceof BadRequestError) throw error;
+    }
+  }
+
+  next();
 };
