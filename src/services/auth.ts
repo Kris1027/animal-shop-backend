@@ -7,7 +7,7 @@ import { users } from '../data/users.js';
 import { env } from '../config/env.js';
 import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 
 export interface TokenPayload {
   userId: string;
@@ -47,6 +47,8 @@ export const authService = {
 
     const token = jwt.sign(payload, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+      issuer: 'animal-shop-api',
+      audience: 'animal-shop-client',
     });
 
     const { password: _password, ...userWithoutPassword } = user;
@@ -68,6 +70,8 @@ export const authService = {
 
     const token = jwt.sign(payload, env.JWT_SECRET, {
       expiresIn: env.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'],
+      issuer: 'animal-shop-api',
+      audience: 'animal-shop-client',
     });
 
     const { password: _password, ...userWithoutPassword } = user;
@@ -76,7 +80,10 @@ export const authService = {
 
   verifyToken: (token: string): TokenPayload => {
     try {
-      return jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+      return jwt.verify(token, env.JWT_SECRET, {
+        issuer: 'animal-shop-api',
+        audience: 'animal-shop-client',
+      }) as TokenPayload;
     } catch {
       throw new UnauthorizedError('Invalid or expired token');
     }
