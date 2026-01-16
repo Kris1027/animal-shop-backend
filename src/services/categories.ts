@@ -37,9 +37,11 @@ export const categoryService = {
   },
 
   create: (data: Omit<Category, 'id' | 'slug' | 'createdAt' | 'updatedAt'>): Category => {
+    const existingSlugs = categories.map((c) => c.slug);
+
     const newCategory: Category = {
       id: nanoid(),
-      slug: generateSlug(data.name),
+      slug: generateSlug(data.name, existingSlugs),
       ...data,
       description: data.description ?? null,
       image: data.image ?? null,
@@ -54,8 +56,9 @@ export const categoryService = {
     const index = categories.findIndex((c) => c.id === id);
     if (index === -1) return null;
 
+    const existingSlugs = categories.filter((c) => c.id !== id).map((c) => c.slug);
     const existing = categories[index]!;
-    const slug = data.name ? generateSlug(data.name) : existing.slug;
+    const slug = data.name ? generateSlug(data.name, existingSlugs) : existing.slug;
     const updated: Category = { ...existing, ...data, slug, updatedAt: new Date() };
     categories[index] = updated;
     return updated;

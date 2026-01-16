@@ -14,7 +14,7 @@
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "check": "prettier --check src && eslint src && tsc",
-    "pre-commit": "prettier --write src && eslint src && tsc",
+    "pre-commit": "prettier --write src && eslint src && tsc && vitest run",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
