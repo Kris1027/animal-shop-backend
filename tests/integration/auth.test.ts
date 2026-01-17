@@ -4,6 +4,9 @@ import app from '../../src/app.js';
 import { users } from '../../src/data/users.js';
 import { getAdminToken } from '../helpers.js';
 import type { User } from '../../src/schemas/user.js';
+import { carts } from '../../src/data/carts.js';
+import { products } from '../../src/data/products.js';
+import { cartService } from '../../src/services/cart.js';
 
 const adminToken = getAdminToken();
 
@@ -17,6 +20,7 @@ describe('Auth API', () => {
   beforeEach(() => {
     users.length = 0;
     users.push(...originalUsers.map((u) => ({ ...u })));
+    carts.length = 0;
   });
 
   describe('POST /auth/register', () => {
@@ -101,6 +105,33 @@ describe('Auth API', () => {
         .expect(400);
 
       expect(response.body.error).toContain('Already authenticated');
+    });
+
+    it('should merge guest cart on login', async () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-merge-test', { productId: product.id, quantity: 3 });
+
+      const response = await request(app)
+        .post('/auth/login')
+        .send({
+          email: 'john@example.com',
+          password: 'password123',
+          guestId: 'guest-merge-test',
+        })
+        .expect(200);
+
+      expect(response.body.data.cart).toBeDefined();
+      expect(response.body.data.cart.items).toHaveLength(1);
+      expect(response.body.data.cart.items[0].quantity).toBe(3);
+    });
+
+    it('should not include cart when no guestId', async () => {
+      const response = await request(app)
+        .post('/auth/login')
+        .send({ email: 'john@example.com', password: 'password123' })
+        .expect(200);
+
+      expect(response.body.data.cart).toBeUndefined();
     });
   });
 

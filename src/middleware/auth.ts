@@ -38,3 +38,20 @@ export const rejectAuthenticated = (req: Request, _res: Response, next: NextFunc
 
   next();
 };
+
+export const optionalAuth = (req: Request, _res: Response, next: NextFunction) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith('Bearer ')) {
+    return next();
+  }
+
+  try {
+    const token = authHeader.slice(7);
+    req.user = authService.verifyToken(token);
+  } catch {
+    // Invalid token - continue as guest
+  }
+
+  next();
+};

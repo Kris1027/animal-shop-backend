@@ -5,3 +5,11 @@ declare module 'express-serve-static-core' {
     user?: TokenPayload;
   }
 }
+
+declare global {
+  namespace Express {
+    interface Request {
+      guestId?: string;
+    }
+  }
+}
