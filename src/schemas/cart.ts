@@ -36,7 +36,7 @@ export type Cart = z.infer<typeof cartSchema>;
 export type AddToCartInput = z.infer<typeof addToCartSchema>;
 export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
 
-export interface CartItemWithProducts extends CartItem {
+export interface CartItemWithProduct extends CartItem {
   product: {
     id: string;
     slug: string;
@@ -50,7 +50,7 @@ export interface CartItemWithProducts extends CartItem {
 
 export interface CartResponse {
   id: string;
-  items: CartItemWithProducts[];
+  items: CartItemWithProduct[];
   itemCount: number;
   total: number;
 }

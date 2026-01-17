@@ -1,4 +1,4 @@
-import type { Cart, AddToCartInput } from '../schemas/cart.js';
+import type { Cart, AddToCartInput, CartResponse, CartItemWithProduct } from '../schemas/cart.js';
 
 import { nanoid } from 'nanoid';
 import { carts } from '../data/carts.js';
@@ -13,24 +13,60 @@ const findProductById = (productId: string) => {
   return products.find((p) => p.id === productId);
 };
 
+const enrichCart = (cart: Cart): CartResponse => {
+  const enrichedItems: CartItemWithProduct[] = [];
+  let total = 0;
+  let itemCount = 0;
+
+  for (const item of cart.items) {
+    const product = findProductById(item.productId);
+    if (product) {
+      const lineTotal = product.price * item.quantity;
+      total += lineTotal;
+      itemCount += item.quantity;
+
+      enrichedItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        addedAt: item.addedAt,
+        product: {
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          stock: product.stock,
+        },
+        lineTotal,
+      });
+    }
+  }
+
+  return {
+    id: cart.id,
+    items: enrichedItems,
+    itemCount,
+    total,
+  };
+};
+
 export const cartService = {
-  get: (userId: string): Cart => {
+  get: (userId: string): CartResponse => {
     const cart = findCartByUserId(userId);
 
     if (!cart) {
       return {
         id: '',
-        userId,
         items: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        itemCount: 0,
+        total: 0,
       };
     }
 
-    return cart;
+    return enrichCart(cart);
   },
 
-  addItem: (userId: string, data: AddToCartInput): Cart => {
+  addItem: (userId: string, data: AddToCartInput): CartResponse => {
     const product = findProductById(data.productId);
     if (!product) throw new NotFoundError('Product');
 
@@ -68,10 +104,10 @@ export const cartService = {
     }
 
     cart.updatedAt = new Date();
-    return cart;
+    return enrichCart(cart);
   },
 
-  updateItem: (userId: string, productId: string, quantity: number): Cart => {
+  updateItem: (userId: string, productId: string, quantity: number): CartResponse => {
     const cart = findCartByUserId(userId);
     if (!cart) throw new NotFoundError('Cart');
 
@@ -89,10 +125,10 @@ export const cartService = {
 
     item.quantity = quantity;
     cart.updatedAt = new Date();
-    return cart;
+    return enrichCart(cart);
   },
 
-  removeItem: (userId: string, productId: string): Cart => {
+  removeItem: (userId: string, productId: string): CartResponse => {
     const cart = findCartByUserId(userId);
     if (!cart) throw new NotFoundError('Cart');
 
@@ -101,7 +137,7 @@ export const cartService = {
 
     cart.items.splice(itemIndex, 1);
     cart.updatedAt = new Date();
-    return cart;
+    return enrichCart(cart);
   },
 
   clear: (userId: string): { message: string } => {
