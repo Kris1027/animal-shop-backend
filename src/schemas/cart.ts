@@ -1,0 +1,56 @@
+import { z } from 'zod';
+
+export const cartItemSchema = z.object({
+  productId: z.string(),
+  quantity: z.number().int().positive(),
+  addedAt: z.date(),
+});
+
+export const cartSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  items: z.array(cartItemSchema),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export const addToCartSchema = z.object({
+  productId: z.string().min(1, 'Product ID is required'),
+  quantity: z
+    .number()
+    .int()
+    .min(1, 'Quantity must be at least 1')
+    .max(99, 'Quantity cannot exceed 99'),
+});
+
+export const updateCartItemSchema = z.object({
+  quantity: z
+    .number()
+    .int()
+    .min(1, 'Quantity must be at least 1')
+    .max(99, 'Quantity cannot exceed 99'),
+});
+
+export type CartItem = z.infer<typeof cartItemSchema>;
+export type Cart = z.infer<typeof cartSchema>;
+export type AddToCartInput = z.infer<typeof addToCartSchema>;
+export type UpdateCartItemInput = z.infer<typeof updateCartItemSchema>;
+
+export interface CartItemWithProducts extends CartItem {
+  product: {
+    id: string;
+    slug: string;
+    name: string;
+    price: number;
+    image: string;
+    stock: number;
+  };
+  lineTotal: number;
+}
+
+export interface CartResponse {
+  id: string;
+  items: CartItemWithProducts[];
+  itemCount: number;
+  total: number;
+}
