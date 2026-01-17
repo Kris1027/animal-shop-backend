@@ -54,3 +54,9 @@ export interface CartResponse {
   itemCount: number;
   total: number;
 }
+
+export const checkoutSchema = z.object({
+  addressId: z.string().min(1, 'Address ID is required'),
+});
+
+export type CheckoutInput = z.infer<typeof checkoutSchema>;

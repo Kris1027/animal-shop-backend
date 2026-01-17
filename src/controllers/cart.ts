@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import { cartService } from '../services/cart.js';
-import { sendSuccess } from '../utils/success.js';
+import { sendCreated, sendSuccess } from '../utils/success.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
 export const cartController = {
@@ -36,5 +36,12 @@ export const cartController = {
   clear: asyncHandler((req: Request, res: Response) => {
     const result = cartService.clear(req.user!.userId);
     sendSuccess(res, result);
+  }),
+
+  // POST /cart/checkout
+  checkout: asyncHandler((req: Request, res: Response) => {
+    const { addressId } = req.body;
+    const order = cartService.checkout(req.user!.userId, addressId);
+    sendCreated(res, order);
   }),
 };

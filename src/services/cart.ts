@@ -4,6 +4,9 @@ import { nanoid } from 'nanoid';
 import { carts } from '../data/carts.js';
 import { products } from '../data/products.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
+import type { Order } from '../schemas/order.js';
+import { addressService } from './addresses.js';
+import { getNextOrderNumber, orders } from '../data/orders.js';
 
 const findCartByUserId = (userId: string): Cart | undefined => {
   return carts.find((cart) => cart.userId === userId);
@@ -148,5 +151,60 @@ export const cartService = {
     }
 
     return { message: 'Cart cleared' };
+  },
+
+  checkout: (userId: string, addressId: string): Order => {
+    const cart = findCartByUserId(userId);
+    if (!cart || cart.items.length === 0) {
+      throw new BadRequestError('Cart is empty');
+    }
+
+    addressService.getById(addressId, userId);
+
+    const orderItems = cart.items.map((item) => {
+      const product = findProductById(item.productId);
+      if (!product) {
+        throw new BadRequestError(`Product ${item.productId} no longer exists`);
+      }
+      if (product.stock < item.quantity) {
+        throw new BadRequestError(
+          `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`
+        );
+      }
+      return {
+        productId: product.id,
+        productName: product.name,
+        price: product.price,
+        quantity: item.quantity,
+      };
+    });
+
+    cart.items.forEach((item) => {
+      const product = findProductById(item.productId)!;
+      product.stock -= item.quantity;
+    });
+
+    const total = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const order: Order = {
+      id: nanoid(),
+      orderNumber: getNextOrderNumber(),
+      userId,
+      addressId,
+      items: orderItems,
+      total,
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    orders.push(order);
+
+    const cartIndex = carts.findIndex((c) => c.userId === userId);
+    if (cartIndex !== -1) {
+      carts.splice(cartIndex, 1);
+    }
+
+    return order;
   },
 };
