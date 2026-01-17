@@ -16,9 +16,10 @@ describe('Cart API', () => {
   });
 
   describe('GET /cart', () => {
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth or guest id', async () => {
       const res = await request(app).get('/cart');
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication or X-Guest-Id header required');
     });
 
     it('should return empty cart for new user', async () => {
@@ -72,14 +73,15 @@ describe('Cart API', () => {
       expect(res.body.data.total).toBe(product.price * 2);
     });
 
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth or guest id', async () => {
       const product = products[0];
 
       const res = await request(app)
         .post('/cart/items')
         .send({ productId: product.id, quantity: 1 });
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication or X-Guest-Id header required');
     });
 
     it('should return 404 for non-existent product', async () => {
@@ -183,12 +185,13 @@ describe('Cart API', () => {
       expect(res.body.data.total).toBe(product.price * 5);
     });
 
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth or guest id', async () => {
       const res = await request(app)
         .patch('/cart/items/prod-001')
         .send({ quantity: 5 });
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication or X-Guest-Id header required');
     });
 
     it('should return 404 for non-existent cart', async () => {
@@ -269,9 +272,10 @@ describe('Cart API', () => {
       expect(res.body.data.total).toBe(0);
     });
 
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth or guest id', async () => {
       const res = await request(app).delete('/cart/items/prod-001');
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication or X-Guest-Id header required');
     });
 
     it('should return 404 for non-existent cart', async () => {
@@ -338,9 +342,10 @@ describe('Cart API', () => {
       expect(res.body.data.message).toBe('Cart cleared');
     });
 
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth or guest id', async () => {
       const res = await request(app).delete('/cart');
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication or X-Guest-Id header required');
     });
 
     it('should succeed even with no cart', async () => {
@@ -462,12 +467,13 @@ describe('Cart API', () => {
       expect(cartRes.body.data.items).toHaveLength(0);
     });
 
-    it('should return 401 without auth', async () => {
+    it('should return 400 without auth', async () => {
       const res = await request(app)
         .post('/cart/checkout')
         .send({ addressId: 'addr-001' });
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication required for checkout');
     });
 
     it('should return 400 for empty cart', async () => {

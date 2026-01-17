@@ -1,19 +1,25 @@
 import type { Cart, AddToCartInput, CartResponse, CartItemWithProduct } from '../schemas/cart.js';
+import type { Order } from '../schemas/order.js';
 
 import { nanoid } from 'nanoid';
 import { carts } from '../data/carts.js';
 import { products } from '../data/products.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
-import type { Order } from '../schemas/order.js';
 import { addressService } from './addresses.js';
 import { getNextOrderNumber, orders } from '../data/orders.js';
 
-const findCartByUserId = (userId: string): Cart | undefined => {
-  return carts.find((cart) => cart.userId === userId);
-};
-
 const findProductById = (productId: string) => {
   return products.find((p) => p.id === productId);
+};
+
+const findCart = (userId?: string, guestId?: string): Cart | undefined => {
+  if (userId) {
+    return carts.find((cart) => cart.userId === userId);
+  }
+  if (guestId) {
+    return carts.find((cart) => cart.guestId === guestId);
+  }
+  return undefined;
 };
 
 const enrichCart = (cart: Cart): CartResponse => {
@@ -54,8 +60,8 @@ const enrichCart = (cart: Cart): CartResponse => {
 };
 
 export const cartService = {
-  get: (userId: string): CartResponse => {
-    const cart = findCartByUserId(userId);
+  get: (userId?: string, guestId?: string): CartResponse => {
+    const cart = findCart(userId, guestId);
 
     if (!cart) {
       return {
@@ -69,16 +75,20 @@ export const cartService = {
     return enrichCart(cart);
   },
 
-  addItem: (userId: string, data: AddToCartInput): CartResponse => {
+  addItem: (userId?: string, guestId?: string, data?: AddToCartInput): CartResponse => {
+    if (!data) throw new BadRequestError('Data is required');
+    if (!userId && !guestId) throw new BadRequestError('User ID or Guest ID is required');
+
     const product = findProductById(data.productId);
     if (!product) throw new NotFoundError('Product');
 
-    let cart = findCartByUserId(userId);
+    let cart = findCart(userId, guestId);
 
     if (!cart) {
       cart = {
         id: nanoid(),
-        userId,
+        userId: userId ?? null,
+        guestId: guestId ?? null,
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -110,8 +120,17 @@ export const cartService = {
     return enrichCart(cart);
   },
 
-  updateItem: (userId: string, productId: string, quantity: number): CartResponse => {
-    const cart = findCartByUserId(userId);
+  updateItem: (
+    userId?: string,
+    guestId?: string,
+    productId?: string,
+    quantity?: number
+  ): CartResponse => {
+    if (!productId || quantity === undefined)
+      throw new BadRequestError('Product ID and quantity are required');
+    if (!userId && !guestId) throw new BadRequestError('User ID or Guest ID is required');
+
+    const cart = findCart(userId, guestId);
     if (!cart) throw new NotFoundError('Cart');
 
     const item = cart.items.find((item) => item.productId === productId);
@@ -131,8 +150,11 @@ export const cartService = {
     return enrichCart(cart);
   },
 
-  removeItem: (userId: string, productId: string): CartResponse => {
-    const cart = findCartByUserId(userId);
+  removeItem: (userId?: string, guestId?: string, productId?: string): CartResponse => {
+    if (!productId) throw new BadRequestError('Product ID is required');
+    if (!userId && !guestId) throw new BadRequestError('User ID or Guest ID is required');
+
+    const cart = findCart(userId, guestId);
     if (!cart) throw new NotFoundError('Cart');
 
     const itemIndex = cart.items.findIndex((item) => item.productId === productId);
@@ -143,8 +165,12 @@ export const cartService = {
     return enrichCart(cart);
   },
 
-  clear: (userId: string): { message: string } => {
-    const cartIndex = carts.findIndex((cart) => cart.userId === userId);
+  clear: (userId?: string, guestId?: string): { message: string } => {
+    if (!userId && !guestId) throw new BadRequestError('User ID or Guest ID is required');
+
+    const cartIndex = carts.findIndex(
+      (cart) => (userId && cart.userId === userId) || (guestId && cart.guestId === guestId)
+    );
 
     if (cartIndex !== -1) {
       carts.splice(cartIndex, 1);
@@ -154,7 +180,7 @@ export const cartService = {
   },
 
   checkout: (userId: string, addressId: string): Order => {
-    const cart = findCartByUserId(userId);
+    const cart = findCart(userId);
     if (!cart || cart.items.length === 0) {
       throw new BadRequestError('Cart is empty');
     }
@@ -206,5 +232,36 @@ export const cartService = {
     }
 
     return order;
+  },
+
+  mergeCarts: (userId: string, guestId: string): CartResponse => {
+    const userCart = carts.find((c) => c.userId === userId);
+    const guestCart = carts.find((c) => c.guestId === guestId);
+
+    if (!guestCart) {
+      return userCart ? enrichCart(userCart) : { id: '', items: [], itemCount: 0, total: 0 };
+    }
+
+    if (!userCart) {
+      guestCart.userId = userId;
+      guestCart.guestId = null;
+      guestCart.updatedAt = new Date();
+      return enrichCart(guestCart);
+    }
+
+    for (const guestItem of guestCart.items) {
+      const existingItem = userCart.items.find((i) => i.productId === guestItem.productId);
+      if (existingItem) {
+        existingItem.quantity += guestItem.quantity;
+      } else {
+        userCart.items.push(guestItem);
+      }
+    }
+
+    const guestIndex = carts.findIndex((c) => c.guestId === guestId);
+    if (guestIndex !== -1) carts.splice(guestIndex, 1);
+
+    userCart.updatedAt = new Date();
+    return enrichCart(userCart);
   },
 };

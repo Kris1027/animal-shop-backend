@@ -8,7 +8,8 @@ export const cartItemSchema = z.object({
 
 export const cartSchema = z.object({
   id: z.string(),
-  userId: z.string(),
+  userId: z.string().nullable(),
+  guestId: z.string().nullable(),
   items: z.array(cartItemSchema),
   createdAt: z.date(),
   updatedAt: z.date(),
