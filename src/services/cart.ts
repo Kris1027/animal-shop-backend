@@ -22,6 +22,19 @@ const findCart = (userId?: string, guestId?: string): Cart | undefined => {
   return undefined;
 };
 
+const validateCartStock = (cart: Cart): void => {
+  cart.items = cart.items.filter((item) => {
+    const product = findProductById(item.productId);
+    if (!product) {
+      return false;
+    }
+    if (item.quantity > product.stock) {
+      item.quantity = product.stock;
+    }
+    return item.quantity > 0;
+  });
+};
+
 const enrichCart = (cart: Cart): CartResponse => {
   const enrichedItems: CartItemWithProduct[] = [];
   let total = 0;
@@ -304,6 +317,7 @@ export const cartService = {
       guestCart.userId = userId;
       guestCart.guestId = null;
       guestCart.updatedAt = new Date();
+      validateCartStock(guestCart);
       return enrichCart(guestCart);
     }
 
@@ -319,6 +333,7 @@ export const cartService = {
     const guestIndex = carts.findIndex((c) => c.guestId === guestId);
     if (guestIndex !== -1) carts.splice(guestIndex, 1);
 
+    validateCartStock(userCart);
     userCart.updatedAt = new Date();
     return enrichCart(userCart);
   },

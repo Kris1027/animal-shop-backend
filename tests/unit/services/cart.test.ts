@@ -408,6 +408,78 @@ describe('Cart Service', () => {
       const guestCart = cartService.get(undefined, 'guest-001');
       expect(guestCart.id).toBe('');
     });
+
+    it('should cap quantity to available stock when combined quantity exceeds stock', () => {
+      const product = products[0];
+      const originalStock = product.stock;
+
+      // Add items that together exceed stock
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: originalStock - 2 });
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 5 });
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      // Combined would be (originalStock - 2) + 5 = originalStock + 3
+      // Should be capped to originalStock
+      expect(mergedCart.items).toHaveLength(1);
+      expect(mergedCart.items[0].quantity).toBe(originalStock);
+    });
+
+    it('should remove item if product no longer exists during merge', () => {
+      const product = products[0];
+      const product2 = products[1];
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 2 });
+      cartService.addItem(undefined, 'guest-001', { productId: product2.id, quantity: 3 });
+
+      // Temporarily remove product2 from products array
+      const removedProduct = products.splice(products.indexOf(product2), 1)[0];
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      // Only product1 should remain
+      expect(mergedCart.items).toHaveLength(1);
+      expect(mergedCart.items[0].productId).toBe(product.id);
+
+      // Restore product for other tests
+      products.push(removedProduct);
+    });
+
+    it('should remove item if stock is zero during merge', () => {
+      const product = products[0];
+      const originalStock = product.stock;
+
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 5 });
+
+      // Set stock to zero
+      product.stock = 0;
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      expect(mergedCart.items).toHaveLength(0);
+
+      // Restore stock for other tests
+      product.stock = originalStock;
+    });
+
+    it('should validate stock when converting guest cart to user cart', () => {
+      const product = products[0];
+      const originalStock = product.stock;
+
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 10 });
+
+      // Reduce stock after adding to guest cart
+      product.stock = 5;
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      // Should be capped to 5
+      expect(mergedCart.items).toHaveLength(1);
+      expect(mergedCart.items[0].quantity).toBe(5);
+
+      // Restore stock for other tests
+      product.stock = originalStock;
+    });
   });
 
   describe('setShippingAddress', () => {
