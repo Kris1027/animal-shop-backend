@@ -300,4 +300,113 @@ describe('Cart Service', () => {
       product.stock = originalStock;
     });
   });
+
+  describe('guest cart', () => {
+    it('should get empty cart for guest', () => {
+      const cart = cartService.get(undefined, 'guest-001');
+
+      expect(cart.id).toBe('');
+      expect(cart.items).toHaveLength(0);
+    });
+
+    it('should add item to guest cart', () => {
+      const product = products[0];
+      const cart = cartService.addItem(undefined, 'guest-001', {
+        productId: product.id,
+        quantity: 2,
+      });
+
+      expect(cart.items).toHaveLength(1);
+      expect(cart.items[0].quantity).toBe(2);
+    });
+
+    it('should update item in guest cart', () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 1 });
+      const cart = cartService.updateItem(undefined, 'guest-001', product.id, 5);
+
+      expect(cart.items[0].quantity).toBe(5);
+    });
+
+    it('should remove item from guest cart', () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 1 });
+      const cart = cartService.removeItem(undefined, 'guest-001', product.id);
+
+      expect(cart.items).toHaveLength(0);
+    });
+
+    it('should clear guest cart', () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 1 });
+      const result = cartService.clear(undefined, 'guest-001');
+
+      expect(result.message).toBe('Cart cleared');
+
+      const cart = cartService.get(undefined, 'guest-001');
+      expect(cart.items).toHaveLength(0);
+    });
+  });
+
+  describe('mergeCarts', () => {
+    it('should return empty cart when no guest cart exists', () => {
+      const cart = cartService.mergeCarts('user-001', 'guest-nonexistent');
+
+      expect(cart.id).toBe('');
+      expect(cart.items).toHaveLength(0);
+    });
+
+    it('should convert guest cart to user cart when user has no cart', () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 2 });
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      expect(mergedCart.items).toHaveLength(1);
+      expect(mergedCart.items[0].quantity).toBe(2);
+
+      // Guest cart should be gone
+      const guestCart = cartService.get(undefined, 'guest-001');
+      expect(guestCart.items).toHaveLength(0);
+
+      // User cart should have items
+      const userCart = cartService.get('user-001');
+      expect(userCart.items).toHaveLength(1);
+    });
+
+    it('should merge guest cart items into existing user cart', () => {
+      const product1 = products[0];
+      const product2 = products[1];
+
+      cartService.addItem('user-001', undefined, { productId: product1.id, quantity: 1 });
+      cartService.addItem(undefined, 'guest-001', { productId: product2.id, quantity: 3 });
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      expect(mergedCart.items).toHaveLength(2);
+      expect(mergedCart.itemCount).toBe(4);
+    });
+
+    it('should combine quantities when same product in both carts', () => {
+      const product = products[0];
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 2 });
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 3 });
+
+      const mergedCart = cartService.mergeCarts('user-001', 'guest-001');
+
+      expect(mergedCart.items).toHaveLength(1);
+      expect(mergedCart.items[0].quantity).toBe(5);
+    });
+
+    it('should delete guest cart after merge', () => {
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-001', { productId: product.id, quantity: 1 });
+
+      cartService.mergeCarts('user-001', 'guest-001');
+
+      const guestCart = cartService.get(undefined, 'guest-001');
+      expect(guestCart.id).toBe('');
+    });
+  });
 });

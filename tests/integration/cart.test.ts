@@ -524,4 +524,115 @@ describe('Cart API', () => {
       expect(res.status).toBe(400);
     });
   });
+
+  describe('Guest Cart', () => {
+    const guestId = 'guest-123';
+
+    it('should return empty cart for guest with X-Guest-Id header', async () => {
+      const res = await request(app).get('/cart').set('X-Guest-Id', guestId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(0);
+      expect(res.body.data.itemCount).toBe(0);
+      expect(res.body.data.total).toBe(0);
+    });
+
+    it('should add item to guest cart', async () => {
+      const product = products[0];
+
+      const res = await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', guestId)
+        .send({ productId: product.id, quantity: 2 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(1);
+      expect(res.body.data.items[0].productId).toBe(product.id);
+      expect(res.body.data.items[0].quantity).toBe(2);
+    });
+
+    it('should update item quantity in guest cart', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', guestId)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .patch(`/cart/items/${product.id}`)
+        .set('X-Guest-Id', guestId)
+        .send({ quantity: 5 });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items[0].quantity).toBe(5);
+    });
+
+    it('should remove item from guest cart', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', guestId)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .delete(`/cart/items/${product.id}`)
+        .set('X-Guest-Id', guestId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.items).toHaveLength(0);
+    });
+
+    it('should clear guest cart', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', guestId)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app).delete('/cart').set('X-Guest-Id', guestId);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.message).toBe('Cart cleared');
+    });
+
+    it('should keep guest carts separate', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', 'guest-A')
+        .send({ productId: product.id, quantity: 1 });
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', 'guest-B')
+        .send({ productId: product.id, quantity: 5 });
+
+      const cartA = await request(app).get('/cart').set('X-Guest-Id', 'guest-A');
+      const cartB = await request(app).get('/cart').set('X-Guest-Id', 'guest-B');
+
+      expect(cartA.body.data.items[0].quantity).toBe(1);
+      expect(cartB.body.data.items[0].quantity).toBe(5);
+    });
+
+    it('should require auth for checkout even with guest cart', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('X-Guest-Id', guestId)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('X-Guest-Id', guestId)
+        .send({ addressId: 'addr-001' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication required for checkout');
+    });
+  });
 });
