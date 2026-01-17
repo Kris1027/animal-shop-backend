@@ -74,6 +74,17 @@ export const cartController = {
     sendSuccess(res, result);
   }),
 
+  // PUT /cart/shipping-address
+  setShippingAddress: asyncHandler((req: Request, res: Response) => {
+    if (!req.user) {
+      throw new BadRequestError('Authentication required to set shipping address');
+    }
+
+    const { addressId } = req.body;
+    const cart = cartService.setShippingAddress(req.user.userId, req.guestId, addressId);
+    sendSuccess(res, cart);
+  }),
+
   // POST /cart/checkout
   checkout: asyncHandler((req: Request, res: Response) => {
     if (!req.user) {

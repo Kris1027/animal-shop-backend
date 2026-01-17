@@ -409,4 +409,76 @@ describe('Cart Service', () => {
       expect(guestCart.id).toBe('');
     });
   });
+
+  describe('setShippingAddress', () => {
+    it('should set shipping address on cart', () => {
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+      const cart = cartService.setShippingAddress('user-001', undefined, address.id);
+
+      expect(cart.shippingAddressId).toBe(address.id);
+      expect(cart.shippingAddress).toBeDefined();
+      expect(cart.shippingAddress!.firstName).toBe(address.firstName);
+    });
+
+    it('should create cart if not exists', () => {
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+      const cart = cartService.setShippingAddress('user-001', undefined, address.id);
+
+      expect(cart.id).toBeDefined();
+      expect(cart.shippingAddressId).toBe(address.id);
+    });
+
+    it('should throw for invalid address', () => {
+      expect(() => cartService.setShippingAddress('user-001', undefined, 'invalid')).toThrow(
+        'Address'
+      );
+    });
+
+    it('should throw for address belonging to another user', () => {
+      const otherUserAddress = addresses.find((a) => a.userId === 'user-002')!;
+      expect(() =>
+        cartService.setShippingAddress('user-001', undefined, otherUserAddress.id)
+      ).toThrow('Address');
+    });
+  });
+
+  describe('checkout with cart address', () => {
+    const initialOrdersLength = orders.length;
+
+    beforeEach(() => {
+      orders.length = initialOrdersLength;
+    });
+
+    it('should use cart shipping address when no addressId provided', () => {
+      const product = products[0];
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 1 });
+      cartService.setShippingAddress('user-001', undefined, address.id);
+
+      const order = cartService.checkout('user-001');
+
+      expect(order.addressId).toBe(address.id);
+    });
+
+    it('should throw when no address set anywhere', () => {
+      const product = products[0];
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 1 });
+
+      expect(() => cartService.checkout('user-001')).toThrow('Shipping address is required');
+    });
+
+    it('should override cart address with provided addressId', () => {
+      const product = products[0];
+      const address1 = addresses.find((a) => a.userId === 'user-001')!;
+      const address2 = addresses.filter((a) => a.userId === 'user-001')[1] || address1;
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 1 });
+      cartService.setShippingAddress('user-001', undefined, address1.id);
+
+      const order = cartService.checkout('user-001', address2.id);
+
+      expect(order.addressId).toBe(address2.id);
+    });
+  });
 });

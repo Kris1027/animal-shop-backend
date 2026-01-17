@@ -635,4 +635,139 @@ describe('Cart API', () => {
       expect(res.body.error).toContain('Authentication required for checkout');
     });
   });
+
+  describe('PUT /cart/shipping-address', () => {
+    it('should set shipping address on cart', async () => {
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+      const addressId = addressRes.body.data[0].id;
+
+      const res = await request(app)
+        .put('/cart/shipping-address')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.shippingAddressId).toBe(addressId);
+      expect(res.body.data.shippingAddress).toBeDefined();
+      expect(res.body.data.shippingAddress.firstName).toBeDefined();
+    });
+
+    it('should return 400 without auth', async () => {
+      const res = await request(app)
+        .put('/cart/shipping-address')
+        .set('X-Guest-Id', 'guest-123')
+        .send({ addressId: 'addr-001' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Authentication required');
+    });
+
+    it('should return 404 for invalid address', async () => {
+      const res = await request(app)
+        .put('/cart/shipping-address')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId: 'invalid-address' });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should include shipping address in cart response', async () => {
+      const product = products[0];
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+      const addressId = addressRes.body.data[0].id;
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      await request(app)
+        .put('/cart/shipping-address')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      const res = await request(app)
+        .get('/cart')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.body.data.shippingAddressId).toBe(addressId);
+      expect(res.body.data.shippingAddress).toBeDefined();
+    });
+  });
+
+  describe('Checkout with cart shipping address', () => {
+    it('should checkout using cart shipping address when no addressId provided', async () => {
+      const product = products[0];
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+      const addressId = addressRes.body.data[0].id;
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      await request(app)
+        .put('/cart/shipping-address')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({});
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.addressId).toBe(addressId);
+    });
+
+    it('should return 400 when no address set anywhere', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({});
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Shipping address is required');
+    });
+
+    it('should override cart address when addressId provided in checkout', async () => {
+      const product = products[0];
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+      const address1 = addressRes.body.data[0].id;
+      const address2 = addressRes.body.data[1]?.id || address1;
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      await request(app)
+        .put('/cart/shipping-address')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId: address1 });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId: address2 });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.addressId).toBe(address2);
+    });
+  });
 });

@@ -10,6 +10,7 @@ export const cartSchema = z.object({
   id: z.string(),
   userId: z.string().nullable(),
   guestId: z.string().nullable(),
+  shippingAddressId: z.string().nullable(),
   items: z.array(cartItemSchema),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -54,10 +55,27 @@ export interface CartResponse {
   items: CartItemWithProduct[];
   itemCount: number;
   total: number;
+  shippingAddressId?: string;
+  shippingAddress?: {
+    firstName: string;
+    lastName: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
-export const checkoutSchema = z.object({
+export const setShippingAddressSchema = z.object({
   addressId: z.string().min(1, 'Address ID is required'),
+});
+
+export type SetShippingAddressInput = z.infer<typeof setShippingAddressSchema>;
+
+export const checkoutSchema = z.object({
+  addressId: z.string().min(1, 'Address ID is required').optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

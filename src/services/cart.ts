@@ -51,11 +51,32 @@ const enrichCart = (cart: Cart): CartResponse => {
     }
   }
 
+  let shippingAddress;
+  if (cart.shippingAddressId && cart.userId) {
+    try {
+      const address = addressService.getById(cart.shippingAddressId, cart.userId);
+      shippingAddress = {
+        firstName: address.firstName,
+        lastName: address.lastName,
+        address1: address.address1,
+        address2: address.address2 ?? undefined,
+        city: address.city,
+        state: address.state,
+        postalCode: address.postalCode,
+        country: address.country,
+      };
+    } catch {
+      // Address no longer exists, ignore
+    }
+  }
+
   return {
     id: cart.id,
     items: enrichedItems,
     itemCount,
     total,
+    shippingAddressId: cart.shippingAddressId ?? undefined,
+    shippingAddress,
   };
 };
 
@@ -89,6 +110,7 @@ export const cartService = {
         id: nanoid(),
         userId: userId ?? null,
         guestId: guestId ?? null,
+        shippingAddressId: null,
         items: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -179,13 +201,49 @@ export const cartService = {
     return { message: 'Cart cleared' };
   },
 
-  checkout: (userId: string, addressId: string): Order => {
+  setShippingAddress: (userId: string, guestId?: string, addressId?: string): CartResponse => {
+    if (!addressId) throw new BadRequestError('Address ID is required');
+    if (!userId) throw new BadRequestError('Authentication required to set shipping address');
+
+    // Verify address exists and belongs to user
+    addressService.getById(addressId, userId);
+
+    let cart = findCart(userId, guestId);
+
+    if (!cart) {
+      cart = {
+        id: nanoid(),
+        userId,
+        guestId: guestId ?? null,
+        shippingAddressId: null,
+        items: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      carts.push(cart);
+    }
+
+    cart.shippingAddressId = addressId;
+    cart.updatedAt = new Date();
+
+    return enrichCart(cart);
+  },
+
+  checkout: (userId: string, addressId?: string): Order => {
     const cart = findCart(userId);
     if (!cart || cart.items.length === 0) {
       throw new BadRequestError('Cart is empty');
     }
 
-    addressService.getById(addressId, userId);
+    // Use provided addressId or fall back to cart's shipping address
+    const finalAddressId = addressId ?? cart.shippingAddressId;
+    if (!finalAddressId) {
+      throw new BadRequestError(
+        'Shipping address is required. Set it on cart or provide addressId.'
+      );
+    }
+
+    addressService.getById(finalAddressId, userId);
 
     const orderItems = cart.items.map((item) => {
       const product = findProductById(item.productId);
@@ -216,7 +274,7 @@ export const cartService = {
       id: nanoid(),
       orderNumber: getNextOrderNumber(),
       userId,
-      addressId,
+      addressId: finalAddressId,
       items: orderItems,
       total,
       status: 'pending',
