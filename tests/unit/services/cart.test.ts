@@ -553,4 +553,106 @@ describe('Cart Service', () => {
       expect(order.addressId).toBe(address2.id);
     });
   });
+
+  describe('orphaned cart item cleanup', () => {
+    it('should remove deleted product from cart when getting cart', () => {
+      const product1 = products[0];
+      const product2 = products[1];
+
+      cartService.addItem('user-001', undefined, { productId: product1.id, quantity: 2 });
+      cartService.addItem('user-001', undefined, { productId: product2.id, quantity: 3 });
+
+      // Temporarily remove product2
+      const removedProduct = products.splice(products.indexOf(product2), 1)[0];
+
+      const cart = cartService.get('user-001');
+
+      // Only product1 should remain
+      expect(cart.items).toHaveLength(1);
+      expect(cart.items[0].productId).toBe(product1.id);
+      expect(cart.itemCount).toBe(2);
+
+      // Restore product for other tests
+      products.push(removedProduct);
+    });
+
+    it('should update totals correctly after removing orphaned items', () => {
+      const product1 = products[0];
+      const product2 = products[1];
+
+      cartService.addItem('user-001', undefined, { productId: product1.id, quantity: 2 });
+      cartService.addItem('user-001', undefined, { productId: product2.id, quantity: 1 });
+
+      // Temporarily remove product2
+      const removedProduct = products.splice(products.indexOf(product2), 1)[0];
+
+      const cart = cartService.get('user-001');
+
+      // Total should only include product1
+      expect(cart.total).toBe(product1.price * 2);
+
+      // Restore product for other tests
+      products.push(removedProduct);
+    });
+
+    it('should remove item when stock becomes zero', () => {
+      const product = products[0];
+      const originalStock = product.stock;
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 5 });
+
+      // Set stock to zero
+      product.stock = 0;
+
+      const cart = cartService.get('user-001');
+
+      expect(cart.items).toHaveLength(0);
+      expect(cart.itemCount).toBe(0);
+      expect(cart.total).toBe(0);
+
+      // Restore stock for other tests
+      product.stock = originalStock;
+    });
+
+    it('should cap quantity when stock is reduced below cart quantity', () => {
+      const product = products[0];
+      const originalStock = product.stock;
+
+      cartService.addItem('user-001', undefined, { productId: product.id, quantity: 10 });
+
+      // Reduce stock below cart quantity
+      product.stock = 3;
+
+      const cart = cartService.get('user-001');
+
+      expect(cart.items).toHaveLength(1);
+      expect(cart.items[0].quantity).toBe(3);
+      expect(cart.total).toBe(product.price * 3);
+
+      // Restore stock for other tests
+      product.stock = originalStock;
+    });
+
+    it('should persist cleanup in actual cart data', () => {
+      const product1 = products[0];
+      const product2 = products[1];
+
+      cartService.addItem('user-001', undefined, { productId: product1.id, quantity: 1 });
+      cartService.addItem('user-001', undefined, { productId: product2.id, quantity: 1 });
+
+      // Temporarily remove product2
+      const removedProduct = products.splice(products.indexOf(product2), 1)[0];
+
+      // Get cart to trigger cleanup
+      cartService.get('user-001');
+
+      // Restore product
+      products.push(removedProduct);
+
+      // Get cart again - product2 should NOT reappear since it was removed from cart
+      const cart = cartService.get('user-001');
+      expect(cart.items).toHaveLength(1);
+      expect(cart.items[0].productId).toBe(product1.id);
+    });
+  });
 });

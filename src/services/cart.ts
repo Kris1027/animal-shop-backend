@@ -36,32 +36,33 @@ const validateCartStock = (cart: Cart): void => {
 };
 
 const enrichCart = (cart: Cart): CartResponse => {
+  // Clean up orphaned items (deleted products, zero stock)
+  validateCartStock(cart);
+
   const enrichedItems: CartItemWithProduct[] = [];
   let total = 0;
   let itemCount = 0;
 
   for (const item of cart.items) {
-    const product = findProductById(item.productId);
-    if (product) {
-      const lineTotal = product.price * item.quantity;
-      total += lineTotal;
-      itemCount += item.quantity;
+    const product = findProductById(item.productId)!;
+    const lineTotal = product.price * item.quantity;
+    total += lineTotal;
+    itemCount += item.quantity;
 
-      enrichedItems.push({
-        productId: item.productId,
-        quantity: item.quantity,
-        addedAt: item.addedAt,
-        product: {
-          id: product.id,
-          slug: product.slug,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          stock: product.stock,
-        },
-        lineTotal,
-      });
-    }
+    enrichedItems.push({
+      productId: item.productId,
+      quantity: item.quantity,
+      addedAt: item.addedAt,
+      product: {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        stock: product.stock,
+      },
+      lineTotal,
+    });
   }
 
   let shippingAddress;
