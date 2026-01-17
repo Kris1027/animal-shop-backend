@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { cartService } from '../../../src/services/cart.js';
 import { carts } from '../../../src/data/carts.js';
 import { products } from '../../../src/data/products.js';
+import { addresses } from '../../../src/data/addresses.js';
+import { orders } from '../../../src/data/orders.js';
 
 describe('Cart Service', () => {
   beforeEach(() => {
@@ -209,6 +211,93 @@ describe('Cart Service', () => {
 
       expect(cart1.items).toHaveLength(0);
       expect(cart2.items).toHaveLength(1);
+    });
+  });
+
+  describe('checkout', () => {
+    const initialOrdersLength = orders.length;
+
+    beforeEach(() => {
+      // Reset orders to initial state
+      orders.length = initialOrdersLength;
+    });
+
+    it('should create order from cart', () => {
+      const product = products[0];
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 2 });
+      const order = cartService.checkout('user-001', address.id);
+
+      expect(order.items).toHaveLength(1);
+      expect(order.items[0].productId).toBe(product.id);
+      expect(order.items[0].quantity).toBe(2);
+      expect(order.total).toBe(product.price * 2);
+      expect(order.status).toBe('pending');
+    });
+
+    it('should clear cart after checkout', () => {
+      const product = products[0];
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 1 });
+      cartService.checkout('user-001', address.id);
+
+      const cart = cartService.get('user-001');
+      expect(cart.items).toHaveLength(0);
+    });
+
+    it('should deduct stock after checkout', () => {
+      const product = products[0];
+      const initialStock = product.stock;
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 2 });
+      cartService.checkout('user-001', address.id);
+
+      expect(product.stock).toBe(initialStock - 2);
+
+      // Restore stock for other tests
+      product.stock = initialStock;
+    });
+
+    it('should throw error for empty cart', () => {
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      expect(() => cartService.checkout('user-001', address.id)).toThrow('Cart is empty');
+    });
+
+    it('should throw error for invalid address', () => {
+      const product = products[0];
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 1 });
+
+      expect(() => cartService.checkout('user-001', 'invalid-address')).toThrow('Address');
+    });
+
+    it('should throw error for address belonging to another user', () => {
+      const product = products[0];
+      const otherUserAddress = addresses.find((a) => a.userId === 'user-002')!;
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 1 });
+
+      expect(() => cartService.checkout('user-001', otherUserAddress.id)).toThrow('Address');
+    });
+
+    it('should throw error for insufficient stock at checkout', () => {
+      const product = products[1]; // stock: 50
+      const originalStock = product.stock;
+      const address = addresses.find((a) => a.userId === 'user-001')!;
+
+      cartService.addItem('user-001', { productId: product.id, quantity: 10 });
+
+      // Simulate stock change after adding to cart
+      product.stock = 5;
+
+      expect(() => cartService.checkout('user-001', address.id)).toThrow('Insufficient stock');
+
+      // Restore stock for other tests
+      product.stock = originalStock;
     });
   });
 });

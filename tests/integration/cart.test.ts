@@ -408,4 +408,114 @@ describe('Cart API', () => {
       expect(adminCart.body.data.items).toHaveLength(1);
     });
   });
+
+  describe('POST /cart/checkout', () => {
+    it('should create order from cart', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 2 });
+
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      const addressId = addressRes.body.data[0].id;
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.items).toHaveLength(1);
+      expect(res.body.data.items[0].productId).toBe(product.id);
+      expect(res.body.data.total).toBe(product.price * 2);
+      expect(res.body.data.status).toBe('pending');
+    });
+
+    it('should clear cart after checkout', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      const addressId = addressRes.body.data[0].id;
+
+      await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      const cartRes = await request(app)
+        .get('/cart')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(cartRes.body.data.items).toHaveLength(0);
+    });
+
+    it('should return 401 without auth', async () => {
+      const res = await request(app)
+        .post('/cart/checkout')
+        .send({ addressId: 'addr-001' });
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return 400 for empty cart', async () => {
+      const addressRes = await request(app)
+        .get('/addresses')
+        .set('Authorization', `Bearer ${userToken}`);
+
+      const addressId = addressRes.body.data[0].id;
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('Cart is empty');
+    });
+
+    it('should return 404 for invalid address', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ addressId: 'invalid-address' });
+
+      expect(res.status).toBe(404);
+    });
+
+    it('should return 400 for missing addressId', async () => {
+      const product = products[0];
+
+      await request(app)
+        .post('/cart/items')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ productId: product.id, quantity: 1 });
+
+      const res = await request(app)
+        .post('/cart/checkout')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({});
+
+      expect(res.status).toBe(400);
+    });
+  });
 });
