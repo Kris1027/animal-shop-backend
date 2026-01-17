@@ -1,10 +1,12 @@
 import type { User, RegisterInput, LoginInput } from '../schemas/user.js';
+import type { CartResponse } from '../schemas/cart.js';
 
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
 import { users } from '../data/users.js';
 import { env } from '../config/env.js';
+import { cartService } from './cart.js';
 import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 
 const SALT_ROUNDS = 12;
@@ -55,7 +57,9 @@ export const authService = {
     return { user: userWithoutPassword, token };
   },
 
-  login: async (data: LoginInput): Promise<{ user: Omit<User, 'password'>; token: string }> => {
+  login: async (
+    data: LoginInput
+  ): Promise<{ user: Omit<User, 'password'>; token: string; cart?: CartResponse }> => {
     const user = users.find((u) => u.email === data.email);
     if (!user) throw new UnauthorizedError('Invalid email or password');
 
@@ -74,8 +78,14 @@ export const authService = {
       audience: 'animal-shop-client',
     });
 
+    // Merge guest cart if guestId provided
+    let cart: CartResponse | undefined;
+    if (data.guestId) {
+      cart = cartService.mergeCarts(user.id, data.guestId);
+    }
+
     const { password: _password, ...userWithoutPassword } = user;
-    return { user: userWithoutPassword, token };
+    return { user: userWithoutPassword, token, cart };
   },
 
   verifyToken: (token: string): TokenPayload => {

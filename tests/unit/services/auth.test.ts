@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { authService } from '../../../src/services/auth.js';
 import { users } from '../../../src/data/users.js';
+import { carts } from '../../../src/data/carts.js';
+import { products } from '../../../src/data/products.js';
+import { cartService } from '../../../src/services/cart.js';
 
 describe('authService', () => {
   beforeEach(() => {
     users.length = 0;
+    carts.length = 0;
   });
 
   describe('getAll', () => {
@@ -80,6 +84,47 @@ describe('authService', () => {
       await expect(
         authService.login({ email: 'test@example.com', password: 'wrongpassword' })
       ).rejects.toThrow('Invalid email or password');
+    });
+
+    it('should merge guest cart on login when guestId provided', async () => {
+      await authService.register({ email: 'test@example.com', password: 'password123' });
+
+      const product = products[0];
+      cartService.addItem(undefined, 'guest-123', { productId: product.id, quantity: 2 });
+
+      const result = await authService.login({
+        email: 'test@example.com',
+        password: 'password123',
+        guestId: 'guest-123',
+      });
+
+      expect(result.cart).toBeDefined();
+      expect(result.cart!.items).toHaveLength(1);
+      expect(result.cart!.items[0].quantity).toBe(2);
+    });
+
+    it('should return undefined cart when no guestId provided', async () => {
+      await authService.register({ email: 'test@example.com', password: 'password123' });
+
+      const result = await authService.login({
+        email: 'test@example.com',
+        password: 'password123',
+      });
+
+      expect(result.cart).toBeUndefined();
+    });
+
+    it('should work with non-existent guestId', async () => {
+      await authService.register({ email: 'test@example.com', password: 'password123' });
+
+      const result = await authService.login({
+        email: 'test@example.com',
+        password: 'password123',
+        guestId: 'non-existent-guest',
+      });
+
+      expect(result.cart).toBeDefined();
+      expect(result.cart!.items).toHaveLength(0);
     });
   });
 
