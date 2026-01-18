@@ -7,6 +7,7 @@ import { products } from '../data/products.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
 import { addressService } from './addresses.js';
 import { getNextOrderNumber, orders } from '../data/orders.js';
+import { logger } from '../utils/logger.js';
 
 const findProductById = (productId: string) => {
   return products.find((p) => p.id === productId);
@@ -26,9 +27,19 @@ const validateCartStock = (cart: Cart): void => {
   cart.items = cart.items.filter((item) => {
     const product = findProductById(item.productId);
     if (!product) {
+      logger.debug({ cartId: cart.id, productId: item.productId }, 'Removed orphaned cart item');
       return false;
     }
     if (item.quantity > product.stock) {
+      logger.debug(
+        {
+          cartId: cart.id,
+          productId: item.productId,
+          requestedQuantity: item.quantity,
+          availableStock: product.stock,
+        },
+        'Capped cart item quantity to available stock'
+      );
       item.quantity = product.stock;
     }
     return item.quantity > 0;
