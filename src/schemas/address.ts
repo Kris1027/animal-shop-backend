@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationQuerySchema } from './pagination.js';
 
 export const addressSchema = z.object({
   id: z.string(),
@@ -33,7 +34,9 @@ export const createAddressSchema = z.object({
 });
 
 export const updateAddressSchema = createAddressSchema.partial();
+export const addressQuerySchema = paginationQuerySchema;
 
 export type Address = z.infer<typeof addressSchema>;
 export type CreateAddressInput = z.infer<typeof createAddressSchema>;
 export type UpdateAddressInput = z.infer<typeof updateAddressSchema>;
+export type AddressQuery = z.infer<typeof addressQuerySchema>;

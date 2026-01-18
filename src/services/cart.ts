@@ -67,8 +67,8 @@ const enrichCart = (cart: Cart): CartResponse => {
 
   let shippingAddress;
   if (cart.shippingAddressId && cart.userId) {
-    try {
-      const address = addressService.getById(cart.shippingAddressId, cart.userId);
+    const address = addressService.getById(cart.shippingAddressId, cart.userId);
+    if (address) {
       shippingAddress = {
         firstName: address.firstName,
         lastName: address.lastName,
@@ -79,9 +79,8 @@ const enrichCart = (cart: Cart): CartResponse => {
         postalCode: address.postalCode,
         country: address.country,
       };
-    } catch {
-      // Address no longer exists, ignore
     }
+    // If address is null, it no longer exists - ignore
   }
 
   return {
@@ -220,7 +219,8 @@ export const cartService = {
     if (!userId) throw new BadRequestError('Authentication required to set shipping address');
 
     // Verify address exists and belongs to user
-    addressService.getById(addressId, userId);
+    const address = addressService.getById(addressId, userId);
+    if (!address) throw new NotFoundError('Address');
 
     let cart = findCart(userId, guestId);
 
@@ -257,7 +257,8 @@ export const cartService = {
       );
     }
 
-    addressService.getById(finalAddressId, userId);
+    const addressCheck = addressService.getById(finalAddressId, userId);
+    if (!addressCheck) throw new NotFoundError('Address');
 
     const orderItems = cart.items.map((item) => {
       const product = findProductById(item.productId);

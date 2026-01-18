@@ -1,8 +1,13 @@
-import type { Address, CreateAddressInput, UpdateAddressInput } from '../schemas/address.js';
+import type {
+  Address,
+  CreateAddressInput,
+  UpdateAddressInput,
+  AddressQuery,
+} from '../schemas/address.js';
 
 import { nanoid } from 'nanoid';
 import { addresses } from '../data/addresses.js';
-import { NotFoundError } from '../utils/errors.js';
+import { paginate, type PaginatedResult } from '../utils/paginate.js';
 
 const clearUserDefaults = (userId: string): void => {
   addresses.forEach((a) => {
@@ -11,14 +16,13 @@ const clearUserDefaults = (userId: string): void => {
 };
 
 export const addressService = {
-  getAllByUser: (userId: string): Address[] => {
-    return addresses.filter((a) => a.userId === userId);
+  getAllByUser: (userId: string, { page, limit }: AddressQuery): PaginatedResult<Address> => {
+    const userAddresses = addresses.filter((a) => a.userId === userId);
+    return paginate(userAddresses, { page, limit });
   },
 
-  getById: (id: string, userId: string): Address => {
-    const address = addresses.find((a) => a.id === id && a.userId === userId);
-    if (!address) throw new NotFoundError('Address');
-    return address;
+  getById: (id: string, userId: string): Address | null => {
+    return addresses.find((a) => a.id === id && a.userId === userId) ?? null;
   },
 
   create: (userId: string, data: CreateAddressInput): Address => {
@@ -52,9 +56,9 @@ export const addressService = {
     return address;
   },
 
-  update: (id: string, userId: string, data: UpdateAddressInput): Address => {
+  update: (id: string, userId: string, data: UpdateAddressInput): Address | null => {
     const index = addresses.findIndex((a) => a.id === id && a.userId === userId);
-    if (index === -1) throw new NotFoundError('Address');
+    if (index === -1) return null;
 
     if (data.isDefault) {
       clearUserDefaults(userId);
@@ -66,17 +70,17 @@ export const addressService = {
     return address;
   },
 
-  delete: (id: string, userId: string): Address => {
+  delete: (id: string, userId: string): Address | null => {
     const index = addresses.findIndex((a) => a.id === id && a.userId === userId);
-    if (index === -1) throw new NotFoundError('Address');
+    if (index === -1) return null;
 
     const [deleted] = addresses.splice(index, 1);
     return deleted!;
   },
 
-  setDefault: (id: string, userId: string): Address => {
+  setDefault: (id: string, userId: string): Address | null => {
     const address = addresses.find((a) => a.id === id && a.userId === userId);
-    if (!address) throw new NotFoundError('Address');
+    if (!address) return null;
 
     addresses.forEach((a) => {
       if (a.userId === userId) a.isDefault = a.id === id;

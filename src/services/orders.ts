@@ -9,7 +9,7 @@ import { nanoid } from 'nanoid';
 import { orders, getNextOrderNumber } from '../data/orders.js';
 import { products } from '../data/products.js';
 import { addressService } from './addresses.js';
-import { BadRequestError } from '../utils/errors.js';
+import { BadRequestError, NotFoundError } from '../utils/errors.js';
 import { paginate, type PaginatedResult } from '../utils/paginate.js';
 
 export const orderService = {
@@ -34,7 +34,8 @@ export const orderService = {
   },
 
   create: (userId: string, data: CreateOrderInput): Order => {
-    addressService.getById(data.addressId, userId);
+    const address = addressService.getById(data.addressId, userId);
+    if (!address) throw new NotFoundError('Address');
 
     const orderItems = data.items.map((item) => {
       const product = products.find((p) => p.id === item.productId);

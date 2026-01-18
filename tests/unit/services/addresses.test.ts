@@ -25,15 +25,15 @@ describe('addressService', () => {
       addressService.create('user-001', validAddress);
       addressService.create('user-002', { ...validAddress, label: 'Work' });
 
-      const result = addressService.getAllByUser('user-001');
+      const result = addressService.getAllByUser('user-001', { page: 1, limit: 10 });
 
-      expect(result).toHaveLength(1);
-      expect(result[0]!.label).toBe('Home');
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]!.label).toBe('Home');
     });
 
     it('should return empty array when user has no addresses', () => {
-      const result = addressService.getAllByUser('user-001');
-      expect(result).toEqual([]);
+      const result = addressService.getAllByUser('user-001', { page: 1, limit: 10 });
+      expect(result.data).toEqual([]);
     });
   });
 
@@ -43,21 +43,20 @@ describe('addressService', () => {
 
       const result = addressService.getById(created.id, 'user-001');
 
-      expect(result.label).toBe('Home');
+      expect(result).not.toBeNull();
+      expect(result!.label).toBe('Home');
     });
 
-    it('should throw for non-existent address', () => {
-      expect(() => addressService.getById('nonexistent', 'user-001')).toThrow(
-        'Address not found'
-      );
+    it('should return null for non-existent address', () => {
+      const result = addressService.getById('nonexistent', 'user-001');
+      expect(result).toBeNull();
     });
 
-    it('should throw for address owned by another user', () => {
+    it('should return null for address owned by another user', () => {
       const created = addressService.create('user-001', validAddress);
 
-      expect(() => addressService.getById(created.id, 'user-002')).toThrow(
-        'Address not found'
-      );
+      const result = addressService.getById(created.id, 'user-002');
+      expect(result).toBeNull();
     });
   });
 
@@ -101,21 +100,20 @@ describe('addressService', () => {
 
       const result = addressService.update(created.id, 'user-001', { label: 'Office' });
 
-      expect(result.label).toBe('Office');
+      expect(result).not.toBeNull();
+      expect(result!.label).toBe('Office');
     });
 
-    it('should throw for non-existent address', () => {
-      expect(() =>
-        addressService.update('nonexistent', 'user-001', { label: 'Office' })
-      ).toThrow('Address not found');
+    it('should return null for non-existent address', () => {
+      const result = addressService.update('nonexistent', 'user-001', { label: 'Office' });
+      expect(result).toBeNull();
     });
 
-    it('should throw for address owned by another user', () => {
+    it('should return null for address owned by another user', () => {
       const created = addressService.create('user-001', validAddress);
 
-      expect(() =>
-        addressService.update(created.id, 'user-002', { label: 'Office' })
-      ).toThrow('Address not found');
+      const result = addressService.update(created.id, 'user-002', { label: 'Office' });
+      expect(result).toBeNull();
     });
 
     it('should clear other defaults when setting isDefault', () => {
@@ -135,22 +133,21 @@ describe('addressService', () => {
 
       const result = addressService.delete(created.id, 'user-001');
 
-      expect(result.id).toBe(created.id);
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(created.id);
       expect(addresses).toHaveLength(0);
     });
 
-    it('should throw for non-existent address', () => {
-      expect(() => addressService.delete('nonexistent', 'user-001')).toThrow(
-        'Address not found'
-      );
+    it('should return null for non-existent address', () => {
+      const result = addressService.delete('nonexistent', 'user-001');
+      expect(result).toBeNull();
     });
 
-    it('should throw for address owned by another user', () => {
+    it('should return null for address owned by another user', () => {
       const created = addressService.create('user-001', validAddress);
 
-      expect(() => addressService.delete(created.id, 'user-002')).toThrow(
-        'Address not found'
-      );
+      const result = addressService.delete(created.id, 'user-002');
+      expect(result).toBeNull();
     });
   });
 
@@ -161,7 +158,8 @@ describe('addressService', () => {
 
       const result = addressService.setDefault(second.id, 'user-001');
 
-      expect(result.isDefault).toBe(true);
+      expect(result).not.toBeNull();
+      expect(result!.isDefault).toBe(true);
     });
 
     it('should clear other defaults', () => {
@@ -173,18 +171,16 @@ describe('addressService', () => {
       expect(addresses.find((a) => a.id === first.id)?.isDefault).toBe(false);
     });
 
-    it('should throw for non-existent address', () => {
-      expect(() => addressService.setDefault('nonexistent', 'user-001')).toThrow(
-        'Address not found'
-      );
+    it('should return null for non-existent address', () => {
+      const result = addressService.setDefault('nonexistent', 'user-001');
+      expect(result).toBeNull();
     });
 
-    it('should throw for address owned by another user', () => {
+    it('should return null for address owned by another user', () => {
       const created = addressService.create('user-001', validAddress);
 
-      expect(() => addressService.setDefault(created.id, 'user-002')).toThrow(
-        'Address not found'
-      );
+      const result = addressService.setDefault(created.id, 'user-002');
+      expect(result).toBeNull();
     });
   });
 });
