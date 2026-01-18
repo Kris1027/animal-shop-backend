@@ -9,6 +9,7 @@ import {
   setShippingAddressSchema,
 } from '../schemas/cart.js';
 import { extractGuestId } from '../middleware/guest.js';
+import { strictLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
@@ -16,15 +17,21 @@ router.use(extractGuestId);
 router.use(optionalAuth);
 
 router.get('/', cartController.get);
-router.post('/items', validate(addToCartSchema), cartController.addItem);
-router.patch('/items/:productId', validate(updateCartItemSchema), cartController.updateItem);
-router.delete('/items/:productId', cartController.removeItem);
-router.delete('/', cartController.clear);
+router.post('/items', strictLimiter, validate(addToCartSchema), cartController.addItem);
+router.patch(
+  '/items/:productId',
+  strictLimiter,
+  validate(updateCartItemSchema),
+  cartController.updateItem
+);
+router.delete('/items/:productId', strictLimiter, cartController.removeItem);
+router.delete('/', strictLimiter, cartController.clear);
 router.put(
   '/shipping-address',
+  strictLimiter,
   validate(setShippingAddressSchema),
   cartController.setShippingAddress
 );
-router.post('/checkout', validate(checkoutSchema), cartController.checkout);
+router.post('/checkout', strictLimiter, validate(checkoutSchema), cartController.checkout);
 
 export default router;
