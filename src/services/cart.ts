@@ -7,6 +7,7 @@ import { products } from '../data/products.js';
 import { NotFoundError, BadRequestError } from '../utils/errors.js';
 import { addressService } from './addresses.js';
 import { getNextOrderNumber, orders } from '../data/orders.js';
+import { logger } from '../utils/logger.js';
 
 const findProductById = (productId: string) => {
   return products.find((p) => p.id === productId);
@@ -22,39 +23,63 @@ const findCart = (userId?: string, guestId?: string): Cart | undefined => {
   return undefined;
 };
 
+const validateCartStock = (cart: Cart): void => {
+  cart.items = cart.items.filter((item) => {
+    const product = findProductById(item.productId);
+    if (!product) {
+      logger.debug({ cartId: cart.id, productId: item.productId }, 'Removed orphaned cart item');
+      return false;
+    }
+    if (item.quantity > product.stock) {
+      logger.debug(
+        {
+          cartId: cart.id,
+          productId: item.productId,
+          requestedQuantity: item.quantity,
+          availableStock: product.stock,
+        },
+        'Capped cart item quantity to available stock'
+      );
+      item.quantity = product.stock;
+    }
+    return item.quantity > 0;
+  });
+};
+
 const enrichCart = (cart: Cart): CartResponse => {
+  // Clean up orphaned items (deleted products, zero stock)
+  validateCartStock(cart);
+
   const enrichedItems: CartItemWithProduct[] = [];
   let total = 0;
   let itemCount = 0;
 
   for (const item of cart.items) {
-    const product = findProductById(item.productId);
-    if (product) {
-      const lineTotal = product.price * item.quantity;
-      total += lineTotal;
-      itemCount += item.quantity;
+    const product = findProductById(item.productId)!;
+    const lineTotal = product.price * item.quantity;
+    total += lineTotal;
+    itemCount += item.quantity;
 
-      enrichedItems.push({
-        productId: item.productId,
-        quantity: item.quantity,
-        addedAt: item.addedAt,
-        product: {
-          id: product.id,
-          slug: product.slug,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          stock: product.stock,
-        },
-        lineTotal,
-      });
-    }
+    enrichedItems.push({
+      productId: item.productId,
+      quantity: item.quantity,
+      addedAt: item.addedAt,
+      product: {
+        id: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        stock: product.stock,
+      },
+      lineTotal,
+    });
   }
 
   let shippingAddress;
   if (cart.shippingAddressId && cart.userId) {
-    try {
-      const address = addressService.getById(cart.shippingAddressId, cart.userId);
+    const address = addressService.getById(cart.shippingAddressId, cart.userId);
+    if (address) {
       shippingAddress = {
         firstName: address.firstName,
         lastName: address.lastName,
@@ -65,9 +90,8 @@ const enrichCart = (cart: Cart): CartResponse => {
         postalCode: address.postalCode,
         country: address.country,
       };
-    } catch {
-      // Address no longer exists, ignore
     }
+    // If address is null, it no longer exists - ignore
   }
 
   return {
@@ -206,7 +230,8 @@ export const cartService = {
     if (!userId) throw new BadRequestError('Authentication required to set shipping address');
 
     // Verify address exists and belongs to user
-    addressService.getById(addressId, userId);
+    const address = addressService.getById(addressId, userId);
+    if (!address) throw new NotFoundError('Address');
 
     let cart = findCart(userId, guestId);
 
@@ -243,7 +268,8 @@ export const cartService = {
       );
     }
 
-    addressService.getById(finalAddressId, userId);
+    const addressCheck = addressService.getById(finalAddressId, userId);
+    if (!addressCheck) throw new NotFoundError('Address');
 
     const orderItems = cart.items.map((item) => {
       const product = findProductById(item.productId);
@@ -304,6 +330,7 @@ export const cartService = {
       guestCart.userId = userId;
       guestCart.guestId = null;
       guestCart.updatedAt = new Date();
+      validateCartStock(guestCart);
       return enrichCart(guestCart);
     }
 
@@ -319,6 +346,7 @@ export const cartService = {
     const guestIndex = carts.findIndex((c) => c.guestId === guestId);
     if (guestIndex !== -1) carts.splice(guestIndex, 1);
 
+    validateCartStock(userCart);
     userCart.updatedAt = new Date();
     return enrichCart(userCart);
   },

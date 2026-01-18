@@ -15,16 +15,16 @@ describe('authService', () => {
     it('should return users without passwords', async () => {
       await authService.register({ email: 'test@example.com', password: 'password123' });
 
-      const result = authService.getAll();
+      const result = authService.getAll({ page: 1, limit: 10 });
 
-      expect(result).toHaveLength(1);
-      expect(result[0]).not.toHaveProperty('password');
-      expect(result[0]!.email).toBe('test@example.com');
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]).not.toHaveProperty('password');
+      expect(result.data[0]!.email).toBe('test@example.com');
     });
 
     it('should return empty array when no users', () => {
-      const result = authService.getAll();
-      expect(result).toEqual([]);
+      const result = authService.getAll({ page: 1, limit: 10 });
+      expect(result.data).toEqual([]);
     });
   });
 

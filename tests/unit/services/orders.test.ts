@@ -77,10 +77,10 @@ describe('orderService', () => {
         items: [{ productId: 'product-001', quantity: 1 }],
       });
 
-      const result = orderService.getAllByUser('user-001');
+      const result = orderService.getAllByUser('user-001', { page: 1, limit: 10 });
 
-      expect(result).toHaveLength(1);
-      expect(result[0]!.userId).toBe('user-001');
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0]!.userId).toBe('user-001');
     });
   });
 
@@ -91,50 +91,29 @@ describe('orderService', () => {
         items: [{ productId: 'product-001', quantity: 1 }],
       });
 
-      const result = orderService.getAll();
+      const result = orderService.getAll({ page: 1, limit: 10 });
 
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
     });
   });
 
   describe('getById', () => {
-    it('should return order for owner', () => {
+    it('should return order by id', () => {
       const created = orderService.create('user-001', {
         addressId: 'addr-001',
         items: [{ productId: 'product-001', quantity: 1 }],
       });
 
-      const result = orderService.getById(created.id, 'user-001', false);
+      const result = orderService.getById(created.id);
 
-      expect(result.id).toBe(created.id);
+      expect(result).not.toBeNull();
+      expect(result!.id).toBe(created.id);
     });
 
-    it('should return order for admin regardless of owner', () => {
-      const created = orderService.create('user-001', {
-        addressId: 'addr-001',
-        items: [{ productId: 'product-001', quantity: 1 }],
-      });
+    it('should return null for non-existent order', () => {
+      const result = orderService.getById('nonexistent');
 
-      const result = orderService.getById(created.id, 'user-002', true);
-
-      expect(result.id).toBe(created.id);
-    });
-
-    it('should throw for non-existent order', () => {
-      expect(() => orderService.getById('nonexistent', 'user-001', false)).toThrow(
-        'Order not found'
-      );
-    });
-
-    it('should throw for order owned by another user (non-admin)', () => {
-      const created = orderService.create('user-001', {
-        addressId: 'addr-001',
-        items: [{ productId: 'product-001', quantity: 1 }],
-      });
-
-      expect(() => orderService.getById(created.id, 'user-002', false)).toThrow(
-        'Order not found'
-      );
+      expect(result).toBeNull();
     });
   });
 
@@ -207,7 +186,8 @@ describe('orderService', () => {
 
       const result = orderService.updateStatus(created.id, { status: 'processing' });
 
-      expect(result.status).toBe('processing');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('processing');
     });
 
     it('should update processing to shipped', () => {
@@ -219,7 +199,8 @@ describe('orderService', () => {
 
       const result = orderService.updateStatus(created.id, { status: 'shipped' });
 
-      expect(result.status).toBe('shipped');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('shipped');
     });
 
     it('should update shipped to delivered', () => {
@@ -232,7 +213,8 @@ describe('orderService', () => {
 
       const result = orderService.updateStatus(created.id, { status: 'delivered' });
 
-      expect(result.status).toBe('delivered');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('delivered');
     });
 
     it('should throw for invalid transition', () => {
@@ -259,10 +241,10 @@ describe('orderService', () => {
       expect(products[0]!.stock).toBe(100);
     });
 
-    it('should throw for non-existent order', () => {
-      expect(() => orderService.updateStatus('nonexistent', { status: 'processing' })).toThrow(
-        'Order not found'
-      );
+    it('should return null for non-existent order', () => {
+      const result = orderService.updateStatus('nonexistent', { status: 'processing' });
+
+      expect(result).toBeNull();
     });
   });
 
@@ -275,7 +257,8 @@ describe('orderService', () => {
 
       const result = orderService.cancel(created.id, 'user-001');
 
-      expect(result.status).toBe('cancelled');
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe('cancelled');
     });
 
     it('should restore stock on cancel', () => {
@@ -303,21 +286,21 @@ describe('orderService', () => {
       );
     });
 
-    it('should throw for non-existent order', () => {
-      expect(() => orderService.cancel('nonexistent', 'user-001')).toThrow(
-        'Order not found'
-      );
+    it('should return null for non-existent order', () => {
+      const result = orderService.cancel('nonexistent', 'user-001');
+
+      expect(result).toBeNull();
     });
 
-    it('should throw for order owned by another user', () => {
+    it('should return null for order owned by another user', () => {
       const created = orderService.create('user-001', {
         addressId: 'addr-001',
         items: [{ productId: 'product-001', quantity: 1 }],
       });
 
-      expect(() => orderService.cancel(created.id, 'user-002')).toThrow(
-        'Order not found'
-      );
+      const result = orderService.cancel(created.id, 'user-002');
+
+      expect(result).toBeNull();
     });
   });
 });

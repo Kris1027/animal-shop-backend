@@ -1,22 +1,23 @@
 import { Router } from 'express';
 import { orderController } from '../controllers/orders.js';
-import { validate } from '../middleware/validate.js';
+import { validate, validateQuery } from '../middleware/validate.js';
 import { authenticate, authorize } from '../middleware/auth.js';
-import { createOrderSchema, updateOrderStatusSchema } from '../schemas/order.js';
+import { createOrderSchema, updateOrderStatusSchema, orderQuerySchema } from '../schemas/order.js';
+import { strictLimiter, readLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
-router.use(authenticate);
-
-router.get('/', orderController.getAll);
-router.get('/:id', orderController.getById);
-router.post('/', validate(createOrderSchema), orderController.create);
+router.get('/', authenticate, readLimiter, validateQuery(orderQuerySchema), orderController.getAll);
+router.get('/:id', authenticate, readLimiter, orderController.getById);
+router.post('/', authenticate, strictLimiter, validate(createOrderSchema), orderController.create);
 router.patch(
   '/:id/status',
+  authenticate,
   authorize('admin'),
+  strictLimiter,
   validate(updateOrderStatusSchema),
   orderController.updateStatus
 );
-router.patch('/:id/cancel', orderController.cancel);
+router.patch('/:id/cancel', authenticate, strictLimiter, orderController.cancel);
 
 export default router;

@@ -1,29 +1,41 @@
-import type { Order, CreateOrderInput, UpdateOrderStatusInput } from '../schemas/order.js';
+import type {
+  Order,
+  CreateOrderInput,
+  UpdateOrderStatusInput,
+  OrderQuery,
+} from '../schemas/order.js';
 
 import { nanoid } from 'nanoid';
 import { orders, getNextOrderNumber } from '../data/orders.js';
 import { products } from '../data/products.js';
 import { addressService } from './addresses.js';
-import { NotFoundError, BadRequestError } from '../utils/errors.js';
+import { BadRequestError, NotFoundError } from '../utils/errors.js';
+import { paginate, type PaginatedResult } from '../utils/paginate.js';
 
 export const orderService = {
-  getAllByUser: (userId: string): Order[] => {
-    return orders.filter((o) => o.userId === userId);
+  getAllByUser: (userId: string, { page, limit, status }: OrderQuery): PaginatedResult<Order> => {
+    let filtered = orders.filter((o) => o.userId === userId);
+    if (status) {
+      filtered = filtered.filter((o) => o.status === status);
+    }
+    return paginate(filtered, { page, limit });
   },
 
-  getAll: (): Order[] => {
-    return [...orders];
+  getAll: ({ page, limit, status }: OrderQuery): PaginatedResult<Order> => {
+    let filtered = [...orders];
+    if (status) {
+      filtered = filtered.filter((o) => o.status === status);
+    }
+    return paginate(filtered, { page, limit });
   },
 
-  getById: (id: string, userId: string, isAdmin: boolean): Order => {
-    const order = orders.find((o) => o.id === id);
-    if (!order) throw new NotFoundError('Order');
-    if (!isAdmin && order.userId !== userId) throw new NotFoundError('Order');
-    return order;
+  getById: (id: string): Order | null => {
+    return orders.find((o) => o.id === id) ?? null;
   },
 
   create: (userId: string, data: CreateOrderInput): Order => {
-    addressService.getById(data.addressId, userId);
+    const address = addressService.getById(data.addressId, userId);
+    if (!address) throw new NotFoundError('Address');
 
     const orderItems = data.items.map((item) => {
       const product = products.find((p) => p.id === item.productId);
@@ -62,9 +74,9 @@ export const orderService = {
     return order;
   },
 
-  updateStatus: (id: string, data: UpdateOrderStatusInput): Order => {
+  updateStatus: (id: string, data: UpdateOrderStatusInput): Order | null => {
     const order = orders.find((o) => o.id === id);
-    if (!order) throw new NotFoundError('Order');
+    if (!order) return null;
 
     const validTransitions: Record<string, string[]> = {
       pending: ['processing', 'cancelled'],
@@ -90,9 +102,9 @@ export const orderService = {
     return order;
   },
 
-  cancel: (id: string, userId: string): Order => {
+  cancel: (id: string, userId: string): Order | null => {
     const order = orders.find((o) => o.id === id && o.userId === userId);
-    if (!order) throw new NotFoundError('Order');
+    if (!order) return null;
 
     if (order.status !== 'pending') {
       throw new BadRequestError('Only pending orders can be cancelled');

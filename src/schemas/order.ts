@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationQuerySchema } from './pagination.js';
 
 export const orderItemSchema = z.object({
   productId: z.string(),
@@ -35,7 +36,12 @@ export const updateOrderStatusSchema = z.object({
   status: z.enum(['processing', 'shipped', 'delivered', 'cancelled']),
 });
 
+export const orderQuerySchema = paginationQuerySchema.extend({
+  status: z.enum(['pending', 'processing', 'shipped', 'delivered', 'cancelled']).optional(),
+});
+
 export type OrderItem = z.infer<typeof orderItemSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
+export type OrderQuery = z.infer<typeof orderQuerySchema>;
