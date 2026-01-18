@@ -9,14 +9,14 @@ import {
   setShippingAddressSchema,
 } from '../schemas/cart.js';
 import { extractGuestId } from '../middleware/guest.js';
-import { strictLimiter } from '../middleware/rate-limiter.js';
+import { strictLimiter, readLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
 router.use(extractGuestId);
 router.use(optionalAuth);
 
-router.get('/', cartController.get);
+router.get('/', readLimiter, cartController.get);
 router.post('/items', strictLimiter, validate(addToCartSchema), cartController.addItem);
 router.patch(
   '/items/:productId',

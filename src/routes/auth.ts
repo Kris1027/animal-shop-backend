@@ -3,7 +3,7 @@ import { authController } from '../controllers/auth.js';
 import { validate, validateQuery } from '../middleware/validate.js';
 import { authenticate, authorize, rejectAuthenticated } from '../middleware/auth.js';
 import { registerSchema, loginSchema, updateRoleSchema, userQuerySchema } from '../schemas/user.js';
-import { strictLimiter } from '../middleware/rate-limiter.js';
+import { strictLimiter, readLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
@@ -11,6 +11,7 @@ router.get(
   '/users',
   authenticate,
   authorize('admin'),
+  readLimiter,
   validateQuery(userQuerySchema),
   authController.getAll
 );
@@ -28,7 +29,7 @@ router.post(
   validate(loginSchema),
   authController.login
 );
-router.get('/me', authenticate, authController.me);
+router.get('/me', authenticate, readLimiter, authController.me);
 router.patch(
   '/users/:id/role',
   authenticate,

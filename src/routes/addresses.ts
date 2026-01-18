@@ -7,12 +7,18 @@ import {
   updateAddressSchema,
   addressQuerySchema,
 } from '../schemas/address.js';
-import { strictLimiter } from '../middleware/rate-limiter.js';
+import { strictLimiter, readLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
-router.get('/', authenticate, validateQuery(addressQuerySchema), addressController.getAll);
-router.get('/:id', authenticate, addressController.getById);
+router.get(
+  '/',
+  authenticate,
+  readLimiter,
+  validateQuery(addressQuerySchema),
+  addressController.getAll
+);
+router.get('/:id', authenticate, readLimiter, addressController.getById);
 router.post(
   '/',
   authenticate,
