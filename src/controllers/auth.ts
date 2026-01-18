@@ -1,15 +1,17 @@
 import type { Request, Response } from 'express';
+import type { UserQuery } from '../schemas/user.js';
 
 import { authService } from '../services/auth.js';
-import { sendCreated, sendSuccess } from '../utils/success.js';
+import { sendCreated, sendSuccess, sendPaginated } from '../utils/success.js';
 import { NotFoundError } from '../utils/errors.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
 export const authController = {
   // GET /auth/users
   getAll: asyncHandler((_req: Request, res: Response) => {
-    const users = authService.getAll();
-    sendSuccess(res, users);
+    const { page, limit } = res.locals.query as UserQuery;
+    const result = authService.getAll({ page, limit });
+    sendPaginated(res, result.data, result.meta);
   }),
 
   // POST /auth/register

@@ -1,13 +1,19 @@
 import { Router } from 'express';
 import { authController } from '../controllers/auth.js';
-import { validate } from '../middleware/validate.js';
+import { validate, validateQuery } from '../middleware/validate.js';
 import { authenticate, authorize, rejectAuthenticated } from '../middleware/auth.js';
-import { registerSchema, loginSchema, updateRoleSchema } from '../schemas/user.js';
+import { registerSchema, loginSchema, updateRoleSchema, userQuerySchema } from '../schemas/user.js';
 import { strictLimiter } from '../middleware/rate-limiter.js';
 
 const router = Router();
 
-router.get('/users', authenticate, authorize('admin'), authController.getAll);
+router.get(
+  '/users',
+  authenticate,
+  authorize('admin'),
+  validateQuery(userQuerySchema),
+  authController.getAll
+);
 router.post(
   '/register',
   rejectAuthenticated,
@@ -27,6 +33,7 @@ router.patch(
   '/users/:id/role',
   authenticate,
   authorize('admin'),
+  strictLimiter,
   validate(updateRoleSchema),
   authController.updateRole
 );

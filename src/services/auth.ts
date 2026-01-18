@@ -1,4 +1,4 @@
-import type { User, RegisterInput, LoginInput } from '../schemas/user.js';
+import type { User, RegisterInput, LoginInput, UserQuery } from '../schemas/user.js';
 import type { CartResponse } from '../schemas/cart.js';
 
 import jwt from 'jsonwebtoken';
@@ -8,6 +8,7 @@ import { users } from '../data/users.js';
 import { env } from '../config/env.js';
 import { cartService } from './cart.js';
 import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
+import { paginate, type PaginatedResult } from '../utils/paginate.js';
 
 const SALT_ROUNDS = 12;
 
@@ -18,8 +19,9 @@ export interface TokenPayload {
 }
 
 export const authService = {
-  getAll: (): Omit<User, 'password'>[] => {
-    return users.map(({ password: _password, ...user }) => user);
+  getAll: ({ page, limit }: UserQuery): PaginatedResult<Omit<User, 'password'>> => {
+    const usersWithoutPasswords = users.map(({ password: _password, ...user }) => user);
+    return paginate(usersWithoutPasswords, { page, limit });
   },
 
   register: async (

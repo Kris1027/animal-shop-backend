@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginationQuerySchema } from './pagination.js';
 
 export const userSchema = z.object({
   id: z.string(),
@@ -28,4 +29,7 @@ export const updateRoleSchema = z.object({
   role: z.enum(['user', 'admin']),
 });
 
+export const userQuerySchema = paginationQuerySchema;
+
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
+export type UserQuery = z.infer<typeof userQuerySchema>;
